@@ -2,7 +2,7 @@
 This package provides tools to work with snapdragon over ROS.
 Before being able to use all these ROS nodes, these dependencies have to be installed.
 
-#Package installation
+# Package installation
 
 Install the dependencies
 ```sh
@@ -43,4 +43,4 @@ mv PX4_ROS_packages/* src/
 catkin_make
 source devel/setup.sh
 ```
-#offboard_control package
+# offboard_control package
