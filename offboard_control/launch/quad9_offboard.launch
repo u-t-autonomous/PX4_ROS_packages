@@ -1,0 +1,43 @@
+<launch>
+	<!-- vim: set ft=xml noet : -->
+	<!-- example launch script for PX4 based FCU's -->
+
+	<arg name="fcu_url/Quad9" default="udp://:14550@192.168.1.5:14556" />
+	<arg name="gcs_url/Quad9" default="" />
+	<arg name="tgt_system/Quad9" default="1" />
+	<arg name="tgt_component/Quad9" default="1" />
+	<arg name="log_output/Quad9" default="screen" />
+
+	<include ns = "Quad9" file="$(find mavros)/launch/node.launch">
+		<arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+		<arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+
+		<arg name="fcu_url" value="$(arg fcu_url/Quad9)" />
+		<arg name="gcs_url" value="$(arg gcs_url/Quad9)" />
+		<arg name="tgt_system" value="$(arg tgt_system/Quad9)" />
+		<arg name="tgt_component" value="$(arg tgt_component/Quad9)" />
+		<arg name="log_output" value="$(arg log_output/Quad9)" />
+	</include>
+
+	<node pkg="vicon_bridge" type="vicon_bridge" name="vicon" output="screen">
+		<param name="stream_mode" value="ClientPull" type="str" />
+		<param name="datastream_hostport" value="192.168.1.100:801" type="str" />
+		<param name="tf_ref_frame_id" value="/world" type="str" />
+	</node>
+
+	<node pkg="offboard_control" name="Quad9_remap" type="vicon_remap_node" output="screen">
+		<param name="quad_name" value="Quad9"/>
+		<param name="frequency" value= "70" />
+	</node>
+
+	<node pkg="offboard_control" name="Quad9_control" type="offboard_control_node" output="screen">
+		<param name="att_mode_rate" value="10"/>
+		<param name="pos_mode_rate" value="20"/>
+		<param name="landing_z" value="0.11"/>
+		<param name="takeoff_z" value="1.2"/>
+		<param name="takeoff_speed" value="1.5"/>
+		<param name="quad_name" value="Quad9"/>
+	</node>
+
+
+</launch>

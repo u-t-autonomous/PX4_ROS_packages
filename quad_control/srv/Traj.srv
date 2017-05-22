@@ -1,0 +1,10 @@
+float32 init_pos
+float32 final_pos
+float32 init_vel
+float32 final_vel
+float32 init_acc
+float32 final_acc
+float32 final_time
+float32 sampling_rate
+---
+trajData[] trajectory

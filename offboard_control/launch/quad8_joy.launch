@@ -1,0 +1,10 @@
+<launch>
+	<node ns="Quad8" respawn="true" pkg="joy" type="joy_node" name="joy" >
+        <param name="dev" type="string" value="/dev/input/js0" />
+        <param name="deadzone" value="0.12" />
+		<param name="autorepeat_rate" value="20" />
+	</node>
+	<node pkg="offboard_control" name="Quad8_joy" type="snap_joy_node" output="screen">
+		<param name="quad_name" value="Quad8"/>
+	</node>
+</launch>
