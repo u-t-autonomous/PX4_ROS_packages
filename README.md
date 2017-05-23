@@ -68,9 +68,9 @@ where X is the vicon number you assigned to the quad. (More mprovement have to b
 
 When offboard_node is launched, the quad can be used via any other ros node. 
 
-##	A C++ example can be find [HERE(joy control of the quad)](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/master/offboard_control/src/snap_joy.cpp)
+###	A C++ example can be find [HERE(joy control of the quad)](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/master/offboard_control/src/snap_joy.cpp)
 
-## A Python example can be find here [HERE(global methods for taking off,landing, switch to poctl, speedctl ...)](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/master/reactive_test/src/system_node.py)
+### A Python example can be find here [HERE(global methods for taking off,landing, switch to poctl, speedctl ...)](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/master/reactive_test/src/system_node.py)
 
 An example can be controlling the quad using a joy. Just launch the predefined launch file
 ```sh
