@@ -68,9 +68,9 @@ where X is the vicon number you assigned to the quad. (More mprovement have to b
 
 When offboard_node is launched, the quad can be used via any other ros node. 
 
-##a C++ example can be find [HERE(joy control of the quad)](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/master/offboard_control/src/snap_joy.cpp)
+##	A C++ example can be find [HERE(joy control of the quad)](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/master/offboard_control/src/snap_joy.cpp)
 
-##a Python example can be find here [HERE(global method for taking off,landing, switch to poctl, speedctl ...)](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/master/reactive_test/src/system_node.py)
+## A Python example can be find here [HERE(global methods for taking off,landing, switch to poctl, speedctl ...)](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/master/reactive_test/src/system_node.py)
 
 An example can be controlling the quad using a joy. Just launch the predefined launch file
 ```sh
@@ -80,4 +80,4 @@ where X is the name of the quad in vicon
 
 example of launch file can be modified for a specific quad name or quad IP or udp mavros port. Just look at the ones in this repository if looking for example. Parameter are pretty self explanatory.
 
-#Reactive test
+# Reactive controller test
