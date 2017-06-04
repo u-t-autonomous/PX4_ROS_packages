@@ -136,7 +136,7 @@ include_directories(
 add_executable(offboard_control_node src/offboard_control.cpp)
 add_executable(vicon_remap_node src/vicon_remap.cpp)
 add_executable(snap_joy_node src/snap_joy.cpp)
-add_executable(vicon_remap_node src/gazebo_vicon_remap.cpp)
+add_executable(gazebo_vicon_remap_node src/gazebo_vicon_remap.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
