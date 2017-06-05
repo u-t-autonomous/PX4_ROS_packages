@@ -73,19 +73,18 @@ for iter1 in range(dim*dim):
 
 #The sys should not enter in collision with environment
 
-for iter1 in range(dim-1):
-	sys_safe |= {('!(env1 = '+str(iter1)+') || !(loc = '+str(iter1+1+ env_row*dim)+')')}
-	sys_safe |= {('!(env1 = '+str(iter1+1)+') || !(loc = '+str(iter1+ env_row*dim)+')')}
+for iter1 in range(dim):
+	sys_safe |= {('!(env1 = '+str(iter1)+') || !(loc = '+str(iter1+ env_row*dim)+')')}
 
 for iter1 in range(dim-1):
 	sys_safe |= {'((env1 = '+str(iter1)+') && (loc = '+str(iter1+ env_row*dim +1)+')) -> X !(loc = '+str(iter1 + env_row*dim)+')'}
 	sys_safe |= {'((env1 = '+str(iter1+1)+') && (loc = '+str(iter1 + env_row*dim)+')) -> X !(loc = '+str(iter1 + env_row*dim +1)+')'}
-	if env_row>0 :
-		sys_safe |= {'((env1 = '+str(iter1)+') && (loc = '+str(iter1+ (env_row-1)*dim +1)+')) -> X !(loc = '+str(iter1 + env_row*dim +1)+')'}
-		sys_safe |= {'((env1 = '+str(iter1+1)+') && (loc = '+str(iter1+ (env_row-1)*dim)+')) -> X !(loc = '+str(iter1 + env_row*dim)+')'}
-	if env_row <dim-1 :
-		sys_safe |= {'((env1 = '+str(iter1)+') && (loc = '+str(iter1+ (env_row+1)*dim +1)+')) -> X !(loc = '+str(iter1 + env_row*dim +1)+')'}
-		sys_safe |= {'((env1 = '+str(iter1+1)+') && (loc = '+str(iter1+ (env_row+1)*dim)+')) -> X !(loc = '+str(iter1 + env_row*dim)+')'}
+	# if env_row>0 :
+	# 	sys_safe |= {'((env1 = '+str(iter1)+') && (loc = '+str(iter1+ (env_row-1)*dim +1)+')) -> X !(loc = '+str(iter1 + env_row*dim +1)+')'}
+	# 	sys_safe |= {'((env1 = '+str(iter1+1)+') && (loc = '+str(iter1+ (env_row-1)*dim)+')) -> X !(loc = '+str(iter1 + env_row*dim)+')'}
+	# if env_row <dim-1 :
+	# 	sys_safe |= {'((env1 = '+str(iter1)+') && (loc = '+str(iter1+ (env_row+1)*dim +1)+')) -> X !(loc = '+str(iter1 + env_row*dim +1)+')'}
+	# 	sys_safe |= {'((env1 = '+str(iter1+1)+') && (loc = '+str(iter1+ (env_row+1)*dim)+')) -> X !(loc = '+str(iter1 + env_row*dim)+')'}
 
 specs = spec.GRSpec(env_vars,sys_vars,env_init,sys_init,env_safe,sys_safe,env_prog,sys_prog) #GR(1) specification created
 #
