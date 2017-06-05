@@ -2,23 +2,7 @@
 	<!-- vim: set ft=xml noet : -->
 	<!-- example launch script for PX4 based FCU's -->
 
-	<arg name="fcu_url/Quad9" default="udp://:14540@127.0.0.1:14557" />
-	<arg name="gcs_url/Quad9" default="" />
-	<arg name="tgt_system/Quad9" default="1" />
-	<arg name="tgt_component/Quad9" default="1" />
-	<arg name="log_output/Quad9" default="screen" />
-
-	<include ns = "Quad9" file="$(find mavros)/launch/node.launch">
-		<arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
-		<arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
-
-		<arg name="fcu_url" value="$(arg fcu_url/Quad9)" />
-		<arg name="gcs_url" value="$(arg gcs_url/Quad9)" />
-		<arg name="tgt_system" value="$(arg tgt_system/Quad9)" />
-		<arg name="tgt_component" value="$(arg tgt_component/Quad9)" />
-		<arg name="log_output" value="$(arg log_output/Quad9)" />
-	</include>
-
+	<!-- Launching nodes and for Quad9 -->
 	<node pkg="offboard_control" name="Quad9_control" type="offboard_control_node" output="screen">
 		<param name="att_mode_rate" value="10"/>
 		<param name="pos_mode_rate" value="20"/>
@@ -28,5 +12,25 @@
 		<param name="quad_name" value="Quad9"/>
 	</node>
 
+	<node pkg="offboard_control" name="Quad9_gazebo_remap" type="gazebo_vicon_remap_node" output="screen">
+		<param name="quad_name" value="Quad9"/>
+		<param name="frequency" value= "100" />
+	</node>
+
+	<!-- Launching nodes for Quad10 -->
+
+	<node pkg="offboard_control" name="Quad10_control" type="offboard_control_node" output="screen">
+		<param name="att_mode_rate" value="10"/>
+		<param name="pos_mode_rate" value="20"/>
+		<param name="landing_z" value="0.11"/>
+		<param name="takeoff_z" value="1.2"/>
+		<param name="takeoff_speed" value="1.5"/>
+		<param name="quad_name" value="Quad10"/>
+	</node>
+
+	<node pkg="offboard_control" name="Quad10_gazebo_remap" type="gazebo_vicon_remap_node" output="screen">
+		<param name="quad_name" value="Quad10"/>
+		<param name="frequency" value= "100" />
+	</node>
 
 </launch>
