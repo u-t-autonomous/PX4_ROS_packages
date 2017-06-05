@@ -43,6 +43,7 @@ SYS_NAME = "/Quad9"
 
 SYS_INIT_X = 0
 SYS_INIT_Y = 0
+ENV_INIT_STATE = 0
 
 ONE_MOVE_DURATION = 3
 SEND_POS_FREQ = 10
@@ -98,9 +99,9 @@ class Env_node :
 
 	def env_quad_init(self):
 		quad_pos = self.grid.state2vicon(self.grid.vicon2state(self.quad.get_current_pos()))
-		next_position =  self.grid.state2vicon(int(self.env_prog/X_NUMBER_TILE) * X_NUMBER_TILE)
-		move_sys(quad_pos,next_position,SEND_POS_FREQ,ONE_MOVE_DURATION,self.publisher)
-		while self.quad.grid_state(self.grid) != 0:
+		next_position =  self.grid.state2vicon(int(self.env_prog/X_NUMBER_TILE) * X_NUMBER_TILE + ENV_INIT_STATE)
+		move_quad(quad_pos,next_position,SEND_POS_FREQ,ONE_MOVE_DURATION,self.publisher)
+		while self.quad.grid_state(self.grid) != ENV_INIT_STATE:
 			wait_rate.sleep()
 
 	def move(self):
@@ -109,18 +110,12 @@ class Env_node :
 		if new_state == (self.env_prog/X_NUMBER_TILE)*X_NUMBER_TILE:
 			new_state = new_state +1
 			next_position = self.grid.state2vicon(new_state)
-			move_sys(quad_pos,next_position,SEND_POS_FREQ,ONE_MOVE_DURATION,self.publisher)
-			while self.quad.grid_state(self.grid) != new_state%Y_NUMBER_TILE:
-				wait_rate.sleep()
-			return new_state
+			return (quad_pos,next_position)
 		if new_state == self.env_prog :
 			self.go_prog == False
 			new_state = new_state - 1
 			next_position = self.grid.state2vicon(new_state)
-			move_sys(quad_pos,next_position,SEND_POS_FREQ,ONE_MOVE_DURATION,self.publisher)
-			while self.quad.grid_state(self.grid) != new_state%Y_NUMBER_TILE:
-				wait_rate.sleep()
-			return new_state
+			return quad_pos,next_position
 
 		if self.go_prog == True :
 			new_state = new_state + 1
@@ -132,10 +127,7 @@ class Env_node :
 			else :
 				new_state = new_state + env_dir[randint(0,1)]
 		next_position = self.grid.state2vicon(new_state)
-		move_sys(quad_pos,next_position,SEND_POS_FREQ,ONE_MOVE_DURATION,self.publisher)
-		while self.quad.grid_state(self.grid) != new_state%Y_NUMBER_TILE:
-			wait_rate.sleep()
-		return new_state
+		return quad_pos,next_position
 
 class Sys_node:
 	def __init__(self,sys_name,grid,quad,publisher,current_controller):
@@ -155,7 +147,7 @@ class Sys_node:
 		next_state = self.current_controller.move(self.quad.grid_state(self.grid))['loc']
 		next_move = self.grid.state2vicon(next_state)
 		print ("current state: ",self.grid.vicon2state(self.grid.get_position()),"NEXT_MOVE: ",next_move, "Next State: ",next_state," obstacle state: ",self.quad.grid_state(self.grid))
-		move_sys(self.grid.state2vicon(self.grid.vicon2state(self.grid.get_position())),next_move,SEND_POS_FREQ,15,self.publisher)
+		move_quad(self.grid.state2vicon(self.grid.vicon2state(self.grid.get_position())),next_move,SEND_POS_FREQ,15,self.publisher)
 		while self.grid.vicon2state(self.grid.get_position()) != next_state:
 			wait_rate.sleep()
 
@@ -164,7 +156,7 @@ class Sys_node:
 		next_state , stage = res['loc'], res['stage']
 		next_move = self.grid.state2vicon(next_state)
 		print ("current state: ",self.grid.vicon2state(self.grid.get_position()),"NEXT_MOVE: ",next_move, "Next State: ",next_state," obstacle state: ",self.quad.grid_state(self.grid),"current stage : ",stage)
-		move_sys(self.grid.state2vicon(self.grid.vicon2state(self.grid.get_position())),next_move,SEND_POS_FREQ,ONE_MOVE_DURATION,self.publisher)
+		return self.grid.state2vicon(self.grid.vicon2state(self.grid.get_position())), next_move
 
 class Quad:
 
@@ -250,31 +242,33 @@ class Grid:
 	def get_position(self):
 		return self.drone_pos
 
+def get_att_pva(current_target_pos,current_target_vel,current_target_acc):
+	att_msg = AttPVA()
+	att_msg.use_position = True
+	att_msg.use_speed = True
+	att_msg.use_acceleration = False
+	att_msg.use_rate = False
+	att_msg.use_yaw = True
+
+	att_msg.yaw = -0.08
+	att_msg.posZ_thrust =current_target_pos.position.z
+	att_msg.posY_pitch = current_target_pos.position.y
+	att_msg.posX_roll = current_target_pos.position.x
+
+	att_msg.velZ=current_target_vel.linear.z
+	att_msg.velY=current_target_vel.linear.y
+	att_msg.velX=current_target_vel.linear.x
+
+	att_msg.accZ= current_target_acc.force.z
+	att_msg.accY=current_target_acc.force.y
+	att_msg.accX=current_target_acc.force.x
+	return att_msg
+
 def send_trajectory(traj_3d, sampling_rate,publisher):
 	r = rospy.Rate(sampling_rate)
-	#print(len(traj_3d.time))
 	for i in range(len(traj_3d.time)):
-		att_msg = AttPVA()
-		att_msg.use_position = True
-		att_msg.use_speed = True
-		att_msg.use_acceleration = False
-		att_msg.use_rate = False
-		att_msg.use_yaw = True
-
-		att_msg.yaw = -0.08
-		att_msg.posZ_thrust =traj_3d.position[i].position.z
-		att_msg.posY_pitch = traj_3d.position[i].position.y
-		att_msg.posX_roll = traj_3d.position[i].position.x
-
-		att_msg.velZ=traj_3d.velocity[i].linear.z
-		att_msg.velY=traj_3d.velocity[i].linear.y
-		att_msg.velX=traj_3d.velocity[i].linear.x
-
-		att_msg.accZ=traj_3d.acceleration[i].force.z
-		att_msg.accY=traj_3d.acceleration[i].force.y
-		att_msg.accX=traj_3d.acceleration[i].force.x
+		att_msg = get_att_pva(traj_3d.position[i],traj_3d.velocity[i],traj_3d.acceleration[i])
 		publisher.publish(att_msg)
-		#print (att_msg)
 		r.sleep()
 
 def get_traj(p_init, p_final, v_init, v_final, a_init, a_final, t_final, freq):
@@ -282,7 +276,6 @@ def get_traj(p_init, p_final, v_init, v_final, a_init, a_final, t_final, freq):
 	try:
 		traj_srv = rospy.ServiceProxy('path_planner', Traj)
 		resp1 = traj_srv(p_init, p_final, v_init, v_final, a_init, a_final, t_final, freq)
-		#print(resp1)
 		return resp1.trajectory
 	except rospy.ServiceException, e:
 		print "Service call failed: %s"%e
@@ -308,17 +301,35 @@ def make_3d_traj(x, y, z):
 		trajlist.position.append(pose)
 	return trajlist
 
-def move_sys(current_pos,next_pos,freq,duration,publisher):
+def get_traj_3d(current_pos,next_pos,freq,duration):
 	x_inputs = {'p_init' : current_pos.x, 'p_final' : next_pos.x, 'v_init' : 0, 'v_final' : 0, 'a_init' : 0, 'a_final' : 0, 't_final' : duration, 'freq' : freq}
 	y_inputs = {'p_init' : current_pos.y, 'p_final' : next_pos.y, 'v_init' : 0, 'v_final' : 0, 'a_init' : 0, 'a_final' : 0, 't_final' : duration, 'freq' : freq}
 	z_inputs = {'p_init' : current_pos.z, 'p_final' : next_pos.z, 'v_init' : 0, 'v_final' : 0, 'a_init' : 0, 'a_final' : 0, 't_final' : duration, 'freq' : freq}
-	#print('x_final :',next_pos.x,', y_final : ',next_pos.y,',z_final : ',next_pos.z)
 	traj_x = get_traj(**x_inputs)
 	traj_y = get_traj(**y_inputs)
 	traj_z = get_traj(**z_inputs)
-	traj_3d = make_3d_traj(traj_x, traj_y, traj_z)
+	return make_3d_traj(traj_x, traj_y, traj_z)
+
+def move_quad(current_pos,next_pos,freq,duration,publisher):
+	traj_3d = get_traj_3d(current_pos,next_pos,freq,duration)
 	send_trajectory(traj_3d,freq,publisher)
 
+def sync_move(env_positions,sys_positions,freq,duration):
+	last_env_pos,next_env_pos = env_positions
+	last_sys_pos,next_sys_pos = sys_positions
+	env_traj = get_traj_3d(last_env_pos,next_env_pos,freq,duration)
+	sys_traj = get_traj_3d(last_sys_pos,next_sys_pos,freq,duration)
+	r = rospy.Rate(freq)
+	for i in range(len(env_traj.time)):
+		env_att_pva = get_att_pva(env_traj.position[i],env_traj.velocity[i],env_traj.acceleration[i])
+		sys_att_pva = get_att_pva(sys_traj.position[i],sys_traj.velocity[i],sys_traj.acceleration[i])
+		sys_traj_pub.publish(sys_att_pva)
+		env_traj_pub.publish(env_att_pva)
+		r.sleep()
+	while env_thread.quad.grid_state(env_thread.grid) != env_thread.grid.vicon2state(next_env_pos)%Y_NUMBER_TILE:
+		r.sleep()
+	while grid.vicon2state(grid.get_position()) != grid.vicon2state(next_sys_pos):
+		r.sleep()
 
 if __name__ == "__main__":
 
@@ -360,35 +371,20 @@ if __name__ == "__main__":
 	while not env_thread.is_posctl:
 		wait_rate.sleep()
 
-	#for iter1 in range(100):
-	#	wait_rate.sleep()
+	#Send env to an initial position
 	env_thread.env_quad_init()
 	wait_rate.sleep()
+	#send sys to his initial position while env is not moving
 	sys_thread.sys_quad_init()
+	wait_rate.sleep()
+	#Finally env had to move before starting the game
+	last_pos,new_pos = env_thread.move()
+	move_quad(last_pos,new_pos,SEND_POS_FREQ,ONE_MOVE_DURATION,env_traj_pub)
+	while env_thread.quad.grid_state(env_thread.grid) != grid.vicon2state(new_pos)%Y_NUMBER_TILE:
+		wait_rate.sleep()
+
+	#Finally start the synchronous routine (simultaneous moves based on the controller)
 	while not rospy.is_shutdown():
-		#raw_input("wait ...")
-		#current_state = grid.vicon2state(quad_env.get_current_pos())
-		#print('current state: ',current_state)
-		#print('current_pos : ',grid.state2vicon(current_state))
-		wait_rate.sleep()
-		print('Next state : ' , env_thread.move())
-		wait_rate.sleep()
-		sys_thread.move()
-    #Starting system thread
-    #sys_thread.start()
-
-    #env_thread.join()
-    #sys_thread.join()
-
-    #wait_rate.sleep()
-    #Moving the sys to the initial state
-    #sys_quad_init()
-    #wait_rate.sleep()
-    # while not rospy.is_shutdown():
-    #     #next_state = current_controller.move(quad_env.grid_state(grid)%X_NUMBER_TILE)['loc']
-    #     res = current_controller.move(quad_env.grid_state(grid))
-    #     next_state , stage = res['loc'], res['stage']
-    #     next_move = grid.state2vicon(next_state)
-    #     print ("current state: ",grid.vicon2state(grid.get_position()),"NEXT_MOVE: ",next_move, "Next State: ",next_state," obstacle state: ",quad_env.grid_state(grid),"current stage : ",stage)
-    #     move_sys(grid.get_position(),next_move,SEND_POS_FREQ,ONE_MOVE_DURATION,sys_traj_pub)
-    #     #wait_rate.sleep()
+		env_positions = env_thread.move()
+		sys_positions = sys_thread.move()
+		sync_move(env_positions,sys_positions,SEND_POS_FREQ,ONE_MOVE_DURATION)
