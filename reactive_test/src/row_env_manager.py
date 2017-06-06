@@ -26,6 +26,10 @@ from sensor_msgs.msg import Joy
 from rowEnvController import RowEnvCtrl
 from random import randint
 
+
+from visualization_msgs.msg import MarkerArray
+from visualization_msgs.msg import Marker
+
 X_NUMBER_TILE = 5
 Y_NUMBER_TILE = 5
 
@@ -48,8 +52,57 @@ ENV_INIT_STATE = 0
 ONE_MOVE_DURATION = 3
 SEND_POS_FREQ = 10
 
-env_prog_rep = [0,0,0,1,1,1,1,1,1,1]
-env_dir = [-1,1]
+sys_target_number = 5 
+sys_target_point = [12, 18 , 16 , 17 , 15 ]
+
+ENV_PROG_STATE = 19
+env_pos_map = [15,16,17,18,19,ENV_PROG_STATE]
+
+def create_marker(i,types,use_text):
+	marker = Marker()
+	marker.header.frame_id = "1"
+	marker.header.stamp = rospy.Time.now()
+	marker.ns = "target_cells"
+	if use_text :
+		marker.id = sys_target_number+i
+		marker.text = ""+str(i)
+		marker.color.r = 0.0
+		marker.color.g = 0.0
+		marker.color.b = 0.0
+		marker.color.a = 1
+		marker.scale.z = 0.3
+	else :
+		marker.id = i
+		marker.color.r = 1.0
+		marker.color.g = 0.0
+		marker.color.b = 0.0
+		marker.color.a = 0.5
+		marker.scale.z = 0.05
+
+	marker.type = types
+	marker.action = Marker.ADD
+	cur_pos =  grid.state2vicon(sys_target_point[i])
+	marker.pose.position.x = cur_pos.x
+	marker.pose.position.y = cur_pos.y
+	marker.pose.position.z = 0
+	marker.pose.orientation.x = 0.0
+	marker.pose.orientation.y = 0.0
+	marker.pose.orientation.z = 0.0
+	marker.pose.orientation.w = 1.0
+	marker.scale.x = grid.blocklengthX-0.05
+	marker.scale.y = grid.blocklengthY-0.05
+	return marker
+
+
+def send_target_rviz() :
+	markers = MarkerArray()
+	for i in range(sys_target_number):
+		marker = create_marker(i,Marker.CUBE,False)
+		marker_text = create_marker(i,Marker.TEXT_VIEW_FACING,True)
+		markers.markers.append(marker)
+		markers.markers.append(marker_text)
+	vis_pub.publish(markers)
+	print ("SENDING MARKERS FINISHED")
 
 def takeoff(quad_name):
 	rospy.wait_for_service(quad_name+'/qcontrol/commands')
@@ -75,14 +128,15 @@ def land(quad_name):
 
 
 class Env_node :
-	def __init__(self,quad_name,grid , quad, publisher,env_prog):
+	def __init__(self,quad_name,grid , quad, publisher,row_line):
 		self.grid = grid
 		self.quad = quad
 		self.publisher = publisher
 		self.is_posctl = False
 		self.quad_name = quad_name
-		self.go_prog = False
-		self.env_prog = env_prog
+		self.row_line = row_line
+		self.next_env_state = ENV_INIT_STATE
+		self.next_target = ENV_INIT_STATE
 
 	def handle_joy(self,msg):
 		if msg.buttons[3] == 1 :
@@ -96,44 +150,62 @@ class Env_node :
 		elif msg.buttons[2] == 1 :
 			start_position_control(self.quad_name)
 			self.is_posctl = True
+		elif msg.buttons[0] == 1 :
+			#send target point to RVIZ
+			send_target_rviz()
 
 	def env_quad_init(self):
+		rospy.wait_for_service(self.quad_name+'/qcontrol/commands')
+		cmdAction = CommandActionRequest()
+		cmdAction.arm_motors = CommandActionRequest.ARM_MOTOR_TRUE
+		cmdAction.is_posctl = CommandActionRequest.IS_POSCTL_TRUE
+		cmd_srv = rospy.ServiceProxy(self.quad_name+'/qcontrol/commands', CommandAction)
+		reponse = cmd_srv(cmdAction)
 		quad_pos = self.grid.state2vicon(self.grid.vicon2state(self.quad.get_current_pos()))
-		next_position =  self.grid.state2vicon(int(self.env_prog/X_NUMBER_TILE) * X_NUMBER_TILE + ENV_INIT_STATE)
+		next_position =  self.grid.state2vicon(self.row_line * X_NUMBER_TILE + self.next_env_state)
 		move_quad(quad_pos,next_position,SEND_POS_FREQ,ONE_MOVE_DURATION,self.publisher)
-		while self.quad.grid_state(self.grid) != ENV_INIT_STATE:
+		while self.quad.grid_state(self.grid) != self.next_env_state:
 			wait_rate.sleep()
+
+	def generate_random_target(self):
+		res = randint(0,len(env_pos_map)-1)
+		while (env_pos_map[res] == self.next_target):
+			res = randint(0,len(env_pos_map)-1)
+		self.next_target = env_pos_map[res]
+
 
 	def move(self):
 		quad_pos = self.grid.state2vicon(self.grid.vicon2state(self.quad.get_current_pos()))
 		new_state = self.grid.vicon2state(quad_pos)
-		if new_state == (self.env_prog/X_NUMBER_TILE)*X_NUMBER_TILE:
+		if new_state == self.row_line*X_NUMBER_TILE:
 			new_state = new_state +1
 			next_position = self.grid.state2vicon(new_state)
+			self.next_env_state = new_state %Y_NUMBER_TILE
+			self.generate_random_target()
 			return (quad_pos,next_position)
-		if new_state == self.env_prog :
-			self.go_prog == False
+		if new_state == (self.row_line*X_NUMBER_TILE + Y_NUMBER_TILE-1):
 			new_state = new_state - 1
 			next_position = self.grid.state2vicon(new_state)
+			self.next_env_state = new_state % Y_NUMBER_TILE
+			self.generate_random_target()
 			return quad_pos,next_position
 
-		if self.go_prog == True :
-			new_state = new_state + 1
-		else :
-			res = randint(0,9)
-			if env_prog_rep[res] == 0 :
-				self.go_prog = True
-				new_state = new_state + 1
-			else :
-				new_state = new_state + env_dir[randint(0,1)]
+		if(new_state == self.next_target):
+			self.generate_random_target()
+
+		if self.next_target > new_state :
+			new_state = new_state+1
+		else:
+			new_state = new_state-1
+		self.next_env_state = new_state% Y_NUMBER_TILE
 		next_position = self.grid.state2vicon(new_state)
 		return quad_pos,next_position
 
 class Sys_node:
-	def __init__(self,sys_name,grid,quad,publisher,current_controller):
+	def __init__(self,sys_name,grid,publisher,current_controller):
 		self.grid = grid
 		self.sys_name = sys_name
-		self.quad = quad
+		self.next_pos = 0
 		self.publisher = publisher
 		self.current_controller = current_controller
 
@@ -144,18 +216,18 @@ class Sys_node:
 		cmdAction.is_posctl = CommandActionRequest.IS_POSCTL_TRUE
 		cmd_srv = rospy.ServiceProxy(self.sys_name+'/qcontrol/commands', CommandAction)
 		reponse = cmd_srv(cmdAction)
-		next_state = self.current_controller.move(self.quad.grid_state(self.grid))['loc']
+		next_state = self.current_controller.move(ENV_INIT_STATE%Y_NUMBER_TILE)['loc']
+		self.next_pos = next_state
 		next_move = self.grid.state2vicon(next_state)
-		print ("current state: ",self.grid.vicon2state(self.grid.get_position()),"NEXT_MOVE: ",next_move, "Next State: ",next_state," obstacle state: ",self.quad.grid_state(self.grid))
 		move_quad(self.grid.state2vicon(self.grid.vicon2state(self.grid.get_position())),next_move,SEND_POS_FREQ,15,self.publisher)
 		while self.grid.vicon2state(self.grid.get_position()) != next_state:
 			wait_rate.sleep()
 
-	def move(self):
-		res = self.current_controller.move(self.quad.grid_state(self.grid))
+	def move(self,next_env_state):
+		res = self.current_controller.move(next_env_state)
 		next_state , stage = res['loc'], res['stage']
+		self.next_pos = next_state
 		next_move = self.grid.state2vicon(next_state)
-		print ("current state: ",self.grid.vicon2state(self.grid.get_position()),"NEXT_MOVE: ",next_move, "Next State: ",next_state," obstacle state: ",self.quad.grid_state(self.grid),"current stage : ",stage)
 		return self.grid.state2vicon(self.grid.vicon2state(self.grid.get_position())), next_move
 
 class Quad:
@@ -357,15 +429,16 @@ if __name__ == "__main__":
 
 	sys_traj_pub = rospy.Publisher(SYS_NAME+"/qcontrol/att_pva", AttPVA, queue_size=10)
 	env_traj_pub = rospy.Publisher(ENV_NAME+"/qcontrol/att_pva", AttPVA, queue_size=10)
+	vis_pub = rospy.Publisher("visualization_marker_array",MarkerArray,queue_size=1)
 
-	env_thread = Env_node(ENV_NAME,grid,quad_env,env_traj_pub,19)
-	sys_thread = Sys_node(SYS_NAME,grid,quad_env,sys_traj_pub,current_controller)
+	env_thread = Env_node(ENV_NAME,grid,quad_env,env_traj_pub,3)
+	sys_thread = Sys_node(SYS_NAME,grid,sys_traj_pub,current_controller)
 
 
 	rospy.Subscriber("/joy",Joy,env_thread.handle_joy)
 
 	wait_rate = rospy.Rate(10)
-
+	
 	#Starting environment thread
 	#env_thread.start()
 	while not env_thread.is_posctl:
@@ -378,13 +451,14 @@ if __name__ == "__main__":
 	sys_thread.sys_quad_init()
 	wait_rate.sleep()
 	#Finally env had to move before starting the game
-	last_pos,new_pos = env_thread.move()
-	move_quad(last_pos,new_pos,SEND_POS_FREQ,ONE_MOVE_DURATION,env_traj_pub)
-	while env_thread.quad.grid_state(env_thread.grid) != grid.vicon2state(new_pos)%Y_NUMBER_TILE:
-		wait_rate.sleep()
+	#last_pos,new_pos = env_thread.move()
+	#move_quad(last_pos,new_pos,SEND_POS_FREQ,ONE_MOVE_DURATION,env_traj_pub)
+	#while env_thread.quad.grid_state(env_thread.grid) != grid.vicon2state(new_pos)%Y_NUMBER_TILE:
+	#	wait_rate.sleep()
 
 	#Finally start the synchronous routine (simultaneous moves based on the controller)
 	while not rospy.is_shutdown():
 		env_positions = env_thread.move()
-		sys_positions = sys_thread.move()
+		sys_positions = sys_thread.move(env_thread.next_env_state)
+		print ("NEXT SYS MOVE : ",sys_thread.next_pos,"  ---> NEXT ENV MOVE : ", env_thread.next_env_state)
 		sync_move(env_positions,sys_positions,SEND_POS_FREQ,ONE_MOVE_DURATION)
