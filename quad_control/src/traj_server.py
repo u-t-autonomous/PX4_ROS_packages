@@ -71,6 +71,7 @@ def test():
     ax.set_ylim(-30,30)
     plt.ion()
     plt.show()
+    print(RefZ[2].tolist()[0])
 
     traj = [x for x in zip(RefX[0].tolist()[0], RefY[0].tolist()[0])]
 
