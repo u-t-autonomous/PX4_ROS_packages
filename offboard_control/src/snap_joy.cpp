@@ -163,7 +163,7 @@ void joy_callback(const sensor_msgs::Joy::ConstPtr& msg){
 
     } else if(quad_state.is_posctl){
     	//current_data.use_position = false;
-    	current_data.use_rate = false;
+    	current_data.use_rate = true;
 
     	//current_yaw += (-msg->axes[YAW_LEFT_AXE] + msg->axes[YAW_RIGHT_AXE])	*	YAW_MAX;
     	//current_yaw = current_yaw > PI_ ?(-2*PI_ +current_yaw) : (current_yaw <-PI_ ? (2*PI_ + current_yaw) : current_yaw);
