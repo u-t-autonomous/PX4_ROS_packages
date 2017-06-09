@@ -6,7 +6,7 @@ Before being able to use all these ROS nodes, these dependencies have to be inst
 
 Install the dependencies
 ```sh
-sudo apt-get install libspnav-dev libbluetooth-dev libcwiid-dev
+sudo apt-get install libspnav-dev libbluetooth-dev libcwiid-dev libusb-dev
 ```
 
 Install ROS using [this](http://wiki.ros.org/indigo/Installation/Ubuntu). This is the indigo version. Feel freee to install the version of your choice.
