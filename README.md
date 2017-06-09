@@ -37,7 +37,7 @@ Then clone the following two catkin_packages and build
 ```sh
 cd ~/catkin_ws/src
 git clone https://github.com/ros-drivers/joystick_drivers.git
-git clone git clone https://github.com/ethz-asl/vicon_bridge
+git clone https://github.com/ethz-asl/vicon_bridge
 cd ..
 catkin_make
 source devel/setup.sh
