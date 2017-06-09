@@ -6,7 +6,7 @@ Before being able to use all these ROS nodes, these dependencies have to be inst
 
 Install the dependencies
 ```sh
-sudo apt-get install libspnav-dev libbluetooth-dev libcwiid-dev libusb-dev
+sudo apt-get install libspnav-dev libbluetooth-dev libcwiid-dev libusb-dev libeigen3-dev
 ```
 
 Install ROS using [this](http://wiki.ros.org/indigo/Installation/Ubuntu). This is the indigo version. Feel freee to install the version of your choice.
@@ -19,6 +19,19 @@ catkin_init_workspace
 cd ..
 catkin_make
 ```
+You alse need to have mavros installed on your computer. if not, follow this :
+```sh
+# For Ros Indigo
+sudo apt-get install ros-indigo-mavros ros-indigo-mavros-extras
+# For Ros Kinteic
+sudo apt-get install ros-kinetic-mavros ros-kinetic-mavros-extras
+```
+Depending on if Eigen3 has his .cmake file in your current version of cmake, you may need to execute this:
+```sh
+sudo cp /usr/share/cmake-2.8/Modules/FindEigen3.cmake /usr/share/cmake-3.X/Modules/
+```
+Where X is your using version of cmake.
+
 If already not done, add the following lines to the end of the .bashrc file:
 ```sh
 export ROS_MASTER_URI=http://192.168.1.XX:11311
