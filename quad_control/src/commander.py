@@ -12,10 +12,10 @@ import sys
 current_state = QuadState()
 
 def takeoff():
-    rospy.wait_for_service('/Quad10/qcontrol/commands')
+    rospy.wait_for_service('/Quad9/qcontrol/commands')
     cmdAction = CommandActionRequest()
     cmdAction.start_takeoff = CommandActionRequest.START_TAKEOFF_TRUE
-    cmd_srv = rospy.ServiceProxy('/Quad10/qcontrol/commands', CommandAction)
+    cmd_srv = rospy.ServiceProxy('/Quad9/qcontrol/commands', CommandAction)
     reponse = cmd_srv(cmdAction)
 
     wait_rate = rospy.Rate(50)
@@ -23,18 +23,18 @@ def takeoff():
         wait_rate.sleep()
 
 def start_position_control():
-    rospy.wait_for_service('/Quad10/qcontrol/commands')
+    rospy.wait_for_service('/Quad9/qcontrol/commands')
     cmdAction = CommandActionRequest()
     cmdAction.arm_motors = CommandActionRequest.ARM_MOTOR_TRUE
     cmdAction.is_posctl = CommandActionRequest.IS_POSCTL_TRUE
-    cmd_srv = rospy.ServiceProxy('/Quad10/qcontrol/commands', CommandAction)
+    cmd_srv = rospy.ServiceProxy('/Quad9/qcontrol/commands', CommandAction)
     reponse = cmd_srv(cmdAction)
 
 def land():
-    rospy.wait_for_service('/Quad10/qcontrol/commands')
+    rospy.wait_for_service('/Quad9/qcontrol/commands')
     cmdAction = CommandActionRequest()
     cmdAction.start_landing = CommandActionRequest.START_LANDING_TRUE;
-    cmd_srv = rospy.ServiceProxy('/Quad10/qcontrol/commands', CommandAction)
+    cmd_srv = rospy.ServiceProxy('/Quad9/qcontrol/commands', CommandAction)
     reponse = cmd_srv(cmdAction)
 
 def send_position(pos):
@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
     rospy.Subscriber('/openbci/live_cmd',Action,action_sub)
 
-    rospy.Subscriber('/vicon/Quad10/Quad10',TransformStamped,update_location)
+    rospy.Subscriber('/vicon/Quad9/Quad9',TransformStamped,update_location)
     
 
     #Topic where you can listen to the current state of the quad. Attribute of QuadState are :
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     ### is_landed = true if the quad is currently on the ground
     ### is_takingoff = true if the quad is trying to take off
     ### takeoff_complete = true if the quad has reach the takeoff altitude
-    rospy.Subscriber('/Quad10/qcontrol/quad_info',QuadState,quadStateSub)
+    rospy.Subscriber('/Quad9/qcontrol/quad_info',QuadState,quadStateSub)
 
     #Topic where you can send PVA to quad. Attribute of AttPVA are :
     ### use_position = true if want to use posX,posY,posZ attributes of the message
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     ### accX
     ### accY
     ### accZ
-    pub = rospy.Publisher('/Quad10/qcontrol/att_pva', AttPVA, queue_size=10)
+    pub = rospy.Publisher('/Quad9/qcontrol/att_pva', AttPVA, queue_size=10)
 
     #Starting position control
     #start_position_control()
