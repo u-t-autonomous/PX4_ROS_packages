@@ -33,11 +33,11 @@ from visualization_msgs.msg import Marker
 X_NUMBER_TILE = 10
 Y_NUMBER_TILE = 10
 
-Y_MINIMUM = -1.5
-X_MINIMUM = -1.5
+Y_MINIMUM = -4 #1.5
+X_MINIMUM = -4
 
-Y_MAXIMUM = 1.5
-X_MAXIMUM = 1.5
+Y_MAXIMUM = 4
+X_MAXIMUM = 4
 
 Z_LEVEL = 1.4
 
@@ -45,13 +45,14 @@ Z_LEVEL = 1.4
 ENV_NAME = "/Quad10"
 SYS_NAME = "/Quad9"
 
-ONE_MOVE_DURATION = 3
+ONE_MOVE_DURATION = 8
 SEND_POS_FREQ = 10
 
 sys_target_number = 4 
 sys_target_point = [22,27,57,72]
 
-env_target_point = [6,15,24,34,44,55,62,72,82,83,84,85,75,65,56,47,37,27,18,8,7]
+env_target_point = [6,15,24,34,44,53,62,72,82,83,84,85,75,65,56,47,37,27,18,8,7]
+curr_color = [1.0,0.0,0.0]
 
 def create_marker(i,types,use_text):
 	marker = Marker()
@@ -87,6 +88,24 @@ def create_marker(i,types,use_text):
 	marker.scale.x = grid.blocklengthX-0.05
 	marker.scale.y = grid.blocklengthY-0.05
 	return marker
+
+def send_setpoint(init_point,end_point):
+	marker = Marker()
+	marker.header.frame_id = "1"
+	marker.header.stamp = rospy.Time.now()
+	marker.ns = "setpoint_target"
+	marker.type = Marker.LINE_STRIP
+	marker.action = Marker.ADD
+	marker.color.r = curr_color[0]
+	marker.color.g = curr_color[1]
+	marker.color.b = curr_color[2]
+	marker.color.a = 1.0
+	#marker.scale.x = grid.blocklengthX-0.05
+	#marker.scale.y = grid.blocklengthY-0.05
+	marker.scale.z = 0.05
+	marker.points.append(init_point)
+	marker.points.append(end_point)
+	set_point_pub.publish(marker)
 
 
 def send_target_rviz() :
@@ -156,6 +175,8 @@ class Env_node :
 		cmd_srv(cmdAction)
 		quad_pos = self.quad.get_current_pos()
 		next_position =  self.grid.state2vicon(self.target_points[self.curr_ind])
+		curr_color = [1.0,0,0]
+		send_setpoint(quad_pos,next_position)
 		move_quad(quad_pos,next_position,SEND_POS_FREQ,5,publisher)
 		while self.quad.grid_state(self.grid) != self.target_points[self.curr_ind]:
 			wait_rate.sleep()
@@ -164,6 +185,8 @@ class Env_node :
 	def move(self,publisher):
 		quad_pos = self.quad.get_current_pos()
 		next_position = self.grid.state2vicon(self.target_points[self.curr_ind])
+		curr_color = [1.0,0,0]
+		send_setpoint(quad_pos,next_position)
 		move_quad(quad_pos,next_position,SEND_POS_FREQ,ONE_MOVE_DURATION,publisher)
 		self.curr_ind = (self.curr_ind +1)%len(self.target_points)
 
@@ -182,6 +205,8 @@ class Sys_node:
 		cmd_srv(cmdAction)
 		next_state = self.current_controller.move(self.quad_env.quad.grid_state(self.quad_env.grid))['loc']
 		next_move = self.quad_env.grid.state2vicon(next_state)
+		curr_color = [1.0,1.0,1.0]
+		send_setpoint(self.quad_env.grid.get_position(),next_move)
 		move_quad(self.quad_env.grid.get_position(),next_move,SEND_POS_FREQ,5,publisher)
 		while self.quad_env.grid.vicon2state(self.quad_env.grid.get_position()) != next_state:
 			wait_rate.sleep()
@@ -190,7 +215,9 @@ class Sys_node:
 		res = self.current_controller.move(self.quad_env.quad.grid_state(self.quad_env.grid))
 		next_state  = res['loc']
 		next_move = self.quad_env.grid.state2vicon(next_state)
-		print ("Current state = ",self.quad_env.grid.vicon2state(self.quad_env.grid.get_position())," , next_state = ",next_state, " , Env_state = ",self.quad_env.quad.grid_state())
+		curr_color = [1.0,1.0,1.0]
+		send_setpoint(self.quad_env.grid.get_position(),next_move)
+		print ("Current state = ",self.quad_env.grid.vicon2state(self.quad_env.grid.get_position())," , next_state = ",next_state, " , Env_state = ",self.quad_env.quad.grid_state(self.quad_env.grid))
 		move_quad(self.quad_env.grid.get_position(),next_move,SEND_POS_FREQ,ONE_MOVE_DURATION,publisher)
 
 class Quad:
@@ -220,8 +247,8 @@ class Grid:
 		self.y = y
 		self.base = base
 		self.maximum = maximum
-		self.blocklengthX = (maximum.x - base.x)/x
-		self.blocklengthY = (maximum.y - base.y)/y
+		self.blocklengthX = (float(maximum.x - base.x))/x
+		self.blocklengthY = (float(maximum.y - base.y))/y
 		self.drone_pos  = Point()
         #assert( ((self.maximum.x - base.x)/self.blocklength) == self.x and ((self.maximum.y - base.y)/self.blocklength) == self.y ), "Your grid sizes do not make sense! "
 
@@ -361,8 +388,11 @@ if __name__ == "__main__":
 	maximum = Point()
 	maximum.x = X_MAXIMUM
 	maximum.y = Y_MAXIMUM
+	maximum.z = Z_LEVEL
 
 	grid = Grid(X_NUMBER_TILE, Y_NUMBER_TILE,Z_LEVEL, base, maximum)
+	print(grid.blocklengthX)
+	print(grid.blocklengthY)
 	quad_env1 = Quad("env1")
 
 	#Gazebo test
@@ -376,6 +406,7 @@ if __name__ == "__main__":
 	sys_traj_pub = rospy.Publisher(SYS_NAME+"/qcontrol/att_pva", AttPVA, queue_size=10)
 	env_traj_pub = rospy.Publisher(ENV_NAME+"/qcontrol/att_pva", AttPVA, queue_size=10)
 	vis_pub = rospy.Publisher("visualization_marker_array",MarkerArray,queue_size=1)
+	set_point_pub = rospy.Publisher("visualization_marker",Marker,queue_size=1)
 
 	env_thread = Env_node(ENV_NAME,quad_env1,grid,env_target_point)
 	sys_thread = Sys_node(SYS_NAME,env_thread,current_controller)
