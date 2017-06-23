@@ -33,11 +33,11 @@ from visualization_msgs.msg import Marker
 X_NUMBER_TILE = 10
 Y_NUMBER_TILE = 10
 
-Y_MINIMUM = -4 #1.5
-X_MINIMUM = -4
+Y_MINIMUM = -5 #1.5
+X_MINIMUM = -5
 
-Y_MAXIMUM = 4
-X_MAXIMUM = 4
+Y_MAXIMUM = 5
+X_MAXIMUM = 5
 
 Z_LEVEL = 1.4
 
