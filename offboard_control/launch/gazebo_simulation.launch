@@ -5,9 +5,9 @@
 	<!-- Launching nodes and for Quad9 -->
 	<node pkg="offboard_control" name="Quad9_control" type="offboard_control_node" output="screen">
 		<param name="att_mode_rate" value="10"/>
-		<param name="pos_mode_rate" value="20"/>
+		<param name="pos_mode_rate" value="50"/>
 		<param name="landing_z" value="0.11"/>
-		<param name="takeoff_z" value="1.2"/>
+		<param name="takeoff_z" value="1.4"/>
 		<param name="takeoff_speed" value="1.5"/>
 		<param name="quad_name" value="Quad9"/>
 	</node>
@@ -23,7 +23,7 @@
 		<param name="att_mode_rate" value="10"/>
 		<param name="pos_mode_rate" value="20"/>
 		<param name="landing_z" value="0.11"/>
-		<param name="takeoff_z" value="1.2"/>
+		<param name="takeoff_z" value="1.4"/>
 		<param name="takeoff_speed" value="1.5"/>
 		<param name="quad_name" value="Quad10"/>
 	</node>
