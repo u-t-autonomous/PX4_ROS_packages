@@ -1,0 +1,4 @@
+uint32 freq
+min_snap/WayPoints waypoints
+---
+min_snap/Trajectory traj
