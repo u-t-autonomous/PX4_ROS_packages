@@ -203,7 +203,7 @@ void set_current_state(const char *state,float delay_s,bool force){
 void set_arming(const bool is_arm_){
     arm_cmd.request.value = is_arm_;
     ros::Rate m_rate(20);
-    while (ros::ok() && !(arming_client.call(arm_cmd) && arm_cmd.response.mode_sent)){
+    while (ros::ok() && !(arming_client.call(arm_cmd) && arm_cmd.response.success)){
         m_rate.sleep();
     }
     if(!is_arm_){
