@@ -177,7 +177,7 @@ void set_current_state(const char *state,float delay_s,bool force){
 	if(force){
 		ros::Rate rate(30);
         set_mode_cmd.request.custom_mode = state;
-		while(ros::ok()  && !(set_mode_client.call(set_mode_cmd) && set_mode_cmd.response.success)){
+		while(ros::ok()  && !(set_mode_client.call(set_mode_cmd) && set_mode_cmd.response.mode_sent)){
 			ROS_ERROR(" %s  MODE can not be enabled !!!!! Trying Again .....",state);
 			rate.sleep();
 		}
@@ -188,7 +188,7 @@ void set_current_state(const char *state,float delay_s,bool force){
     if ((ros::Time::now()-last_request)>ros::Duration(delay_s) && current_state.mode != s_state){
         set_mode_cmd.request.custom_mode = state;
         ROS_INFO("PREVIOUS MODE WAS %s !!!!!",current_state.mode.c_str());
-        if(set_mode_client.call(set_mode_cmd) && set_mode_cmd.response.success){
+        if(set_mode_client.call(set_mode_cmd) && set_mode_cmd.response.mode_sent){
         	s_state=s_state+" MODE is now trying to be enabled at %f secs !!!!!";
             ROS_WARN(s_state.c_str(), ros::Time::now().toSec());
         } else {
@@ -203,7 +203,7 @@ void set_current_state(const char *state,float delay_s,bool force){
 void set_arming(const bool is_arm_){
     arm_cmd.request.value = is_arm_;
     ros::Rate m_rate(20);
-    while (ros::ok() && !(arming_client.call(arm_cmd) && arm_cmd.response.success)){
+    while (ros::ok() && !(arming_client.call(arm_cmd) && arm_cmd.response.mode_sent)){
         m_rate.sleep();
     }
     if(!is_arm_){
