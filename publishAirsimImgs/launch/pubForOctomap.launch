@@ -1,0 +1,74 @@
+<launch>
+
+	<node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
+		<param name="resolution" value=".5" />
+		
+		<!-- fixed map frame (set to 'map' if SLAM or localization running!) -->
+		<param name="frame_id" type="string" value="fcu" />
+		
+		<!-- maximum range to integrate (speedup!) -->
+		<param name="sensor_model/max_range" value="20" />
+		
+		<!-- data source to integrate (PointCloud2) -->
+		<remap from="cloud_in" to="/points" />
+
+		<!-- Filter ground for binary occupancy map -->
+		<param name="base_frame_id" value="fcu" />
+		<!-- <param name="filter_ground" value="true" />
+		<param name="ground_filter_plane_distance" value="1.00" />
+		<param name="ground_filter/distance" value="0.50" /> -->
+	    <param name="pointcloud_min_z" type="double" value="0.0" />
+	    <param name="pointcloud_max_z" type="double" value="6.0" />
+	    <param name="occupancy_min_z" type="double" value="0.0" />
+	    <param name="occupancy_max_z" type="double" value="5.8" />
+		<!-- <param name="ground_filter_plane_distance" value="0.07" />
+		<param name="ground_filter/distance" value="0.04" />
+		<param name="ground_filter/angle" value="0.4" /> -->
+	
+	</node>
+
+  <node pkg="airsim_img_publisher"
+    type="airsim_imgPublisher"
+    name="airsim_imgPublisher"
+    output="screen">
+
+    <!-- IP of the Airsim computer -->
+    <param name="Airsim_ip" value="192.168.1.10"/>
+
+    <!-- Port of the Airsim computer (this is default, do not change!) -->
+    <param name="Airsim_port" value="41451"/>
+
+    <!-- RGB camera parameters (parameters when calibrated) -->
+    <param name="Fx" value="128"/>
+    <param name="Fy" value="128"/>
+    <param name="cx" value="128"/>
+    <param name="cy" value="72"/>
+    <param name="width" value="256"/>  <!-- Width when calibrated!-->
+    <param name="height" value="144"/> <!-- Height when calibrated!-->
+
+    <!-- Depth baseline -->
+    <param name="Tx" value="0.14"/> 
+    <param name="scale" value="0.38"/> 
+    <param name="maxDist" value="20.0"/> 
+
+    <!-- Topic with odometry information for the vehicle (used to create tf tree) -->
+    <param name="odomTopic" value="/mavros/local_position/odom"/>
+  </node>
+
+
+    <!-- Nodelet manager for this pipeline -->
+    <node pkg="nodelet" type="nodelet" args="manager" name="depth_transforms_manager" output="screen"/>
+
+     <!-- Convert to point cloud -->
+    <node pkg="nodelet" type="nodelet" name="cloudify"
+    args="load depth_image_proc/point_cloud_xyz depth_transforms_manager --no-bond">
+
+        <!-- Input: Camera calibration and metadata.  (sensor_msgs/CameraInfo) -->
+        <remap from="rgb/camera_info" to="/Airsim/depth/camera_info"/> 
+        <!-- Input: Rectified depth image -->
+        <remap from="image_rect" to="/Airsim/depth"/>   
+
+    </node>
+
+</launch>
+
