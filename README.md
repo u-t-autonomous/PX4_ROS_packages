@@ -1,5 +1,5 @@
 # PX4_ROS_packages
-This package provides tools to work with snapdragon over ROS.
+This package provides tools to work with PX4 and Snapdragon over ROS.
 Before being able to use all these ROS nodes, these dependencies have to be installed.
 
 # Package installation
