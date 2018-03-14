@@ -1,10 +1,28 @@
 <launch>
-	<node ns="Quad10" respawn="true" pkg="joy" type="joy_node" name="joy" >
-        <param name="dev" type="string" value="/dev/input/js0" />
-        <param name="deadzone" value="0.12" />
-		<param name="autorepeat_rate" value="20" />
-	</node>
-	<node pkg="offboard_control" name="Quad10_joy" type="snap_joy_node" output="screen">
-		<param name="quad_name" value="Quad10"/>
+
+	<arg name="only_command" default="false" />
+	<node ns="Quad10" pkg="joy" name="joy" type="joy_node" output="screen" />
+
+	<node ns="Quad10" pkg="offboard_control" name="Quad10_joy" type="snap_joy_node" output="screen">
+		<param name="only_command" value = "$(arg only_command)" />
+		<param name="time_constant" value="0.2" />
+		<param name="LB" value="4" />
+		<param name="RB" value="5" />
+		<param name="LT" value="2" />
+		<param name="RT" value="5" />
+		<param name="X" value="2" />
+		<param name="Y" value="3" />
+		<param name="A" value="0" />
+		<param name="B" value="1" />
+		<param name="Start" value="7" />
+		<param name="Back" value="6" />
+		<param name="up_down_axis_left" value="1" />
+		<param name="left_right_axis_left" value="0" />
+		<param name="up_down_axis_right" value="4" />
+		<param name="left_right_axis_right" value="3" />
+		<param name="left_cross_key" value="11" />
+		<param name="right_cross_key" value="12" />
+		<param name="up_cross_key" value="13" />
+		<param name="down_cross_key" value="14" />
 	</node>
 </launch>

@@ -1,26 +1,42 @@
-uint8 IS_POSHLD_UNDEFINED = 0
-uint8 IS_POSHLD_TRUE = 1
-uint8 IS_POSHLD_FALSE = 2
+
 uint8 IS_POSCTL_UNDEFINED = 0
 uint8 IS_POSCTL_TRUE = 1
 uint8 IS_POSCTL_FALSE = 2
+
+uint8 IS_VELCTL_UNDEFINED = 0
+uint8 IS_VELCTL_TRUE = 1
+uint8 IS_VELCTL_FALSE = 2
+
+uint8 IS_ACCCTL_UNDEFINED = 0
+uint8 IS_ACCCTL_TRUE = 1
+uint8 IS_ACCCTL_FALSE = 2
+
 uint8 IS_ATTCTL_UNDEFINED = 0
 uint8 IS_ATTCTL_TRUE = 1
 uint8 IS_ATTCTL_FALSE = 2
+
+uint8 IS_PVACTL_UNDEFINED = 0
+uint8 IS_PVACTL_TRUE = 1
+uint8 IS_PVACTL_FALSE = 2
+
 uint8 ARM_MOTOR_UNDEFINED = 0
 uint8 ARM_MOTOR_TRUE = 1
 uint8 ARM_MOTOR_FALSE  = 2
+
 uint8 START_TAKEOFF_UNDEFINED = 0
 uint8 START_TAKEOFF_TRUE = 1
 uint8 START_TAKEOFF_FALSE = 2
+
 uint8 START_LANDING_UNDEFINED = 0
 uint8 START_LANDING_TRUE = 1
 uint8 START_LANDING_FALSE = 2
 
-uint8 is_poshld			#true if want to toggle position hold mode and offboard mode 
 uint8 is_posctl			#true if want to activate position control
+uint8 is_velctl 		#true if want to activate velocity control
+uint8 is_accctl 		#true if want to activate acceleration control
+uint8 is_pvactl 		#true if want to activate pva control
 uint8 is_attctl			#true if want to activate attitude control --> Note that is_posctl and is_attctl can't be true at same time
-uint8 arm_motors			#toggle arming/desarming command
+uint8 arm_motors		#toggle arming/desarming command
 uint8 start_takeoff		#send take off command
 uint8 start_landing		#toggle landing command
 ---

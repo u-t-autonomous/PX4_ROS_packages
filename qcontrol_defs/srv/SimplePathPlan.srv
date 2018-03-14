@@ -1,0 +1,23 @@
+
+uint32 freq
+
+float64[] x
+float64[] y
+float64[] z
+
+float64[] velx_init
+float64[] vely_init
+float64[] velz_init
+
+float64[] accx_init
+float64[] accy_init
+float64[] accz_init
+
+float64[] yaw
+float64[] yaw_rate_init
+
+float64[] corridors
+
+float64[] t
+---
+Trajectory traj

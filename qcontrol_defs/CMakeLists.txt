@@ -7,16 +7,24 @@ add_message_files(
    DIRECTORY msg
    FILES
    PVA.msg
-   PVAStamped.msg
-   PVAArray.msg
-   AttPVA.msg
+   PosControl.msg
+   VelControl.msg
+   AccControl.msg
+   AttControl.msg
    QuadState.msg
+   ConstraintValue.msg
+   ConstraintAxis.msg
+   Trajectory.msg
+   WayPoints.msg
  )
 
  add_service_files(
   DIRECTORY srv
   FILES
   CommandAction.srv
+  PathPlan.srv
+  updatePx4param.srv
+  SimplePathPlan.srv
 )
 
  generate_messages(

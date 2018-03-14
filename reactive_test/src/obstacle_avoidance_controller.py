@@ -13,13 +13,13 @@ from time import sleep
 from math import floor
 
 #from ObstacleController import ObstacleCtrl
-from followMeController import FollowCtrl
+from followMeController10_2_2 import FollowCtrl10_2_2
 
 from visualization_msgs.msg import Marker
 from threading import Thread,RLock
 
-X_NUMBER_TILE = 50
-Y_NUMBER_TILE = 50
+X_NUMBER_TILE = 10
+Y_NUMBER_TILE = 10
 
 Y_MINIMUM = -5 #1.5
 X_MINIMUM = -5
@@ -28,6 +28,7 @@ Y_MAXIMUM = 5
 X_MAXIMUM = 5
 
 Z_LEVEL = 1.4
+SYS_PERIMETER = 2
 
 
 ENV_NAME = "/Quad10"
@@ -35,7 +36,7 @@ SYS_NAME = "/Quad9"
 
 curr_color = [1.0,0.0,0.0]
 ENV_OBSV_RATE = 100
-SYS_MAX_TIME_STEP = rospy.Duration(1.0) #In second
+SYS_MAX_TIME_STEP = rospy.Duration(8.0) #In second
 
 def send_setpoint(init_point,end_point):
     marker = Marker()
@@ -118,7 +119,21 @@ class Sys_node(Thread):
         self.lock.release()
         self.publisher.publish(pva_msg)
         r.sleep()
-        
+
+    def get_relative_real_state(self,grid):
+    	self.lock.acquire();
+    	exp_state = grid.vicon2state(self.next_position)
+    	real_state = grid.vicon2state(self.position)
+    	exp_state_row = exp_state/X_NUMBER_TILE
+    	exp_state_col = exp_state%Y_NUMBER_TILE
+    	real_state_row = real_state/X_NUMBER_TILE
+    	real_state_col = real_state%Y_NUMBER_TILE
+    	rel_state_col = exp_state_col- real_state_col
+    	rel_state_row = exp_state_row- real_state_row
+    	rel_state_row = rel_state_row + SYS_PERIMETER
+    	rel_state_col =  rel_state_col + SYS_PERIMETER
+    	self.lock.release();
+    	return (rel_state_row,rel_state_col)
 
     def run(self):
     	sys_delay = rospy.Rate(50)
@@ -208,7 +223,7 @@ def get_att_pva(current_target_pos,current_target_vel):
     return att_msg
 
 if __name__ == "__main__":
-    current_controller = FollowCtrl()
+    current_controller = FollowCtrl10_2_2()
     #Grid definition
     base = Point()
     base.x = X_MINIMUM
@@ -236,7 +251,7 @@ if __name__ == "__main__":
 
     raw_input('Lock the environment in the grid ... ')
     previous_env_state = quad_env1.grid_state(grid)
-    next_position = grid.state2vicon(current_controller.move(previous_env_state)['loc'])
+    next_position = grid.state2vicon(current_controller.move(SYS_PERIMETER,previous_env_state,SYS_PERIMETER)['loc'])
     sys_thread.init_position(next_position)
     raw_input('start playing against sys ...')
     sys_thread.start()
@@ -246,16 +261,21 @@ if __name__ == "__main__":
         curr_env_state = quad_env1.grid_state(grid)
         if previous_env_state == curr_env_state :
             if(rospy.Time.now()-last_state_mod >= SYS_MAX_TIME_STEP):
-                next_state = current_controller.move(curr_env_state)['loc']
+            	(sys_delta_row,sys_delta_col) =  sys_thread.get_relative_real_state(grid)
+                next_state = current_controller.move(sys_delta_row,curr_env_state,sys_delta_col)['loc']
                 sys_thread.set_next_target(SYS_MAX_TIME_STEP.to_sec(),grid.state2vicon(next_state))
                 last_state_mod = rospy.Time.now()
         else:
             delta_t = rospy.Time.now() - last_state_mod
             if delta_t.to_sec() == 0:
             	delta_t = rospy.Duration(0.1)
-            next_state = current_controller.move(curr_env_state)['loc']
-            sys_thread.set_next_target(delta_t.to_sec(),grid.state2vicon(next_state))
-            print('NEW STATE : ',curr_env_state,' -- OLD STATE : ',previous_env_state,' -- SYS STATE : ',next_state,' -- DELTA_T : ',delta_t.to_sec())
+            (sys_delta_row,sys_delta_col) =  sys_thread.get_relative_real_state(grid)
+            try:
+            	next_state = current_controller.move(sys_delta_row,curr_env_state,sys_delta_col)['loc']
+            except ValueError:
+            	next_state = current_controller.move(SYS_PERIMETER,curr_env_state,SYS_PERIMETER)['loc']
+            sys_thread.set_next_target(delta_t.to_sec()/2,grid.state2vicon(next_state))
+            print('NEW STATE : ',curr_env_state,' -- OLD STATE : ',previous_env_state,' -- REAL SYS POS: ',sys_delta_row,' , ',sys_delta_col,' -- SYS STATE : ',next_state,' -- DELTA_T : ',delta_t.to_sec())
             previous_env_state = curr_env_state
             last_state_mod = rospy.Time.now()
         wait_rate.sleep()

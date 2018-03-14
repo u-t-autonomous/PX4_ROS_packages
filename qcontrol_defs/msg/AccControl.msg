@@ -1,0 +1,2 @@
+bool is_body_frame
+geometry_msgs/Vector3 acc

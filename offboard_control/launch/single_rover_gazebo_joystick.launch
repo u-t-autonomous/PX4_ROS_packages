@@ -1,0 +1,72 @@
+<launch>
+	<!-- vim: set ft=xml noet : -->
+	<!-- example launch script for PX4 based FCU's -->
+
+	<arg name="fcu_url" default="udp://:14540@127.0.0.1:14557" />
+	<arg name="gcs_url" default="" />
+	<arg name="tgt_system" default="1" />
+	<arg name="tgt_component" default="1" />
+	<arg name="log_output" default="screen" />
+	<arg name="only_command" default="false" />
+	<arg name="is_multicopter" default="false" />
+
+
+	<!-- <node ns="mavros" pkg="offboard_control" name="Quad9_visu" type="copter_visualization_node" output="screen" /> -->
+
+	<node pkg="offboard_control" name="Quad_offboard" type="offboard_control_node" output="screen">
+		<param name ="is_multicopter" value= "$(arg is_multicopter)" />
+		<param name="att_mode_rate" value="40"/>
+		<param name="pva_mode_rate" value="20"/>
+		<param name="landing_z" value="0.11"/>
+		<param name="takeoff_z" value="1.4"/>
+		<param name="takeoff_Kp" value="1.0" />
+		<param name="landing_Kp" value="1.0" />
+
+		<!-- Position Control parameters -->
+	    <param name="mass" value="1.535"/>       <!-- kg -->
+	    <param name="gz" value="9.81"/>          <!-- m/s^2 -->
+	    <param name="thrustRatio" value="1.7"/>  <!-- maxThrust/Weight -->
+	    <param name="kpx" value="10"/>
+	    <param name="kpy" value="10"/>
+	    <param name="kpz" value="10"/>
+	    <param name="kvx" value="5"/>
+	    <param name="kvy" value="5"/>
+	    <param name="kvz" value="7.5"/>
+	    <param name="kix" value="0"/>
+	    <param name="kiy" value="0"/>
+	    <param name="kiz" value="0"/>
+	    <param name="maxInteg_x" value="0"/>
+	    <param name="maxInteg_y" value="0"/>
+		<param name="maxInteg_z" value="0"/>
+	</node>
+
+	<node pkg="joy" name="joy" type="joy_node" output="screen" >
+		<!-- <param name="autorepeat_rate" value="40"/> -->
+	</node>
+
+	<node pkg="offboard_control" name="Quad_joy" type="snap_joy_node" output="screen">
+		<param name="only_command" value = "$(arg only_command)" />
+		<param name="is_multicopter" value = "$(arg is_multicopter)" />
+		<param name="time_constant" value="0.2" />
+		<param name="LB" value="4" />
+		<param name="RB" value="5" />
+		<param name="LT" value="2" />
+		<param name="RT" value="5" />
+		<param name="X" value="2" />
+		<param name="Y" value="3" />
+		<param name="A" value="0" />
+		<param name="B" value="1" />
+		<param name="Start" value="7" />
+		<param name="Back" value="6" />
+		<param name="up_down_axis_left" value="1" />
+		<param name="left_right_axis_left" value="0" />
+		<param name="up_down_axis_right" value="4" />
+		<param name="left_right_axis_right" value="3" />
+		<param name="left_cross_key" value="11" />
+		<param name="right_cross_key" value="12" />
+		<param name="up_cross_key" value="13" />
+		<param name="down_cross_key" value="14" />
+
+		<!-- <param name="yaw_rate_max" value="3.14" /> -->
+	</node>
+</launch>

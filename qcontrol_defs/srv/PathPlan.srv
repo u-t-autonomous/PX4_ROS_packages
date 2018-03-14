@@ -1,0 +1,23 @@
+uint8 AUTOMATIC_SOLVER=0					#Let the choice to the server to choose the appropriate solver for the problem  
+
+uint8 ALGLIB_CORRIDOR=1						#Use alglib solver for corridor constraints and let the program choose between bleic and denseaul
+uint8 ALGLIB_CORRIDOR_DENSEAUL=2			#Use alglib solver for corridor constraints and force alglib to use dense aul algorithm
+uint8 ALGLIB_CORRIDOR_BLEIC=3				#Use alglib solver for corridor constraints and force alglib to use dense aul algorithm
+
+uint8 ITERATIVE_CORRIDOR=4					#Use iterative corridors  method with automatic choose of solver 
+uint8 ITERATIVE_CORRIDOR_BLEIC=6			#Iterative corridors with bleic solver
+uint8 ITERATIVE_CORRIDOR_DENSEAUL=7			#Iterative corridors with denseaul solver
+
+uint8 ALGLIB_DENSEAUL=8						#No corridor and use dense aul as solver
+uint8 ALGLIB_BLEIC=9						#No corridor and use bleic as solver--> if none of the two above is used --> program will automatically choose lagrange multiplier
+
+########################################################################################################
+float64 NAN_VALUE=3.141592653				#Use this value to tell the solver to not use a crtain value
+########################################################################################################
+
+uint8 solver_choice							#Always choose between one of the solver above
+
+uint32 freq
+WayPoints waypoints
+---
+Trajectory traj

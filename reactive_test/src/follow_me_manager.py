@@ -10,12 +10,9 @@ from quad_control.msg import TrajArray
 from geometry_msgs.msg import Vector3
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Pose
-from qcontrol_defs.msg import PVA
-from qcontrol_defs.msg import PVAStamped
 from geometry_msgs.msg import TransformStamped
 from geometry_msgs.msg import PoseStamped
-from qcontrol_defs.msg import AttPVA
-from qcontrol_defs.msg import QuadState
+from qcontrol_defs.msg import *
 from qcontrol_defs.srv import *
 from time import sleep
 import numpy as np
@@ -23,44 +20,65 @@ from time import sleep
 from math import floor
 
 from sensor_msgs.msg import Joy
-from followMeController import FollowMeCtrl
+#from followMeController_10_2_0_0 import FollowMeCtrl10
+from followMeController_50_4_2_2_obs import FollowMeCtrl_50_obs
 from random import randint
 
 
 from visualization_msgs.msg import MarkerArray
 from visualization_msgs.msg import Marker
 
-X_NUMBER_TILE = 10
-Y_NUMBER_TILE = 10
+X_NUMBER_TILE = 100
+Y_NUMBER_TILE = 100
 
-Y_MINIMUM = -5 #1.5
-X_MINIMUM = -5
+Y_MINIMUM = -5.5 #vic = 1.5  && sim = 5
+X_MINIMUM = -5.5
 
-Y_MAXIMUM = 5
-X_MAXIMUM = 5
+Y_MAXIMUM = 5.5
+X_MAXIMUM = 5.5
 
 Z_LEVEL = 1.4
 
 
-ENV_NAME = "/Quad10"
-SYS_NAME = "/Quad9"
+ENV_NAME = "/Quad9"
+SYS_NAME = "/Quad8"
 
-ONE_MOVE_DURATION = 8
+ONE_MOVE_DURATION = 0.2
 SEND_POS_FREQ = 10
 
-sys_target_number = 4 
-sys_target_point = [22,27,57,72]
+#sys_target_point = [58,46,76,72,51,54,43,13,31]
+#sys_target_point = [56,54,33,25]
+#sys_target_number = len(sys_target_point)
+sys_target_number = 0
 
-env_target_point = [6,15,24,34,44,53,62,72,82,83,84,85,75,65,56,47,37,27,18,8,7]
+#env_target_point = [6,15,24,34,44,53,62,72,82,83,84,85,75,65,56,47,37,27,18,8,7]
+#env_target_point = [36,37,47,56,57,67,77,66,65,64,53,62,52,53,43,33,32,22,33,23,24,25,35,45,46]
+env_target_point = [36,37,46,47,57,67,77,66,65,64,53,62,52,53,43,33,32,22,33,23,24,25,35,45,46]
+#env_target_point =[]
 curr_color = [1.0,0.0,0.0]
 
-def create_marker(i,types,use_text):
+def get_point_strict_dist(curr_state,distance,strict_dist = True):
+	dim = X_NUMBER_TILE
+	curr_row = curr_state/dim
+	curr_column = curr_state % dim
+	res = list()
+	for row in range(curr_row-distance,curr_row+distance+1,1):
+		for column in range(curr_column-distance,curr_column+distance+1,1):
+			if strict_dist:
+				if (row >= 0 and row <dim and column >=0 and column < dim and (curr_row!=row or curr_column!=column) and ((abs(curr_column-column) == distance) or (abs(curr_row - row) == distance))):
+					res.append(row*dim + column)
+			else:
+				if row >= 0 and row <dim and column >=0 and column < dim  and ((row != curr_row) or (column != curr_column)):
+					res.append(row*dim + column)
+	return res
+
+def create_marker(i,value_target,types,use_text,obstacle=False):
 	marker = Marker()
 	marker.header.frame_id = "1"
 	marker.header.stamp = rospy.Time.now()
 	marker.ns = "target_cells"
 	if use_text :
-		marker.id = sys_target_number+i
+		marker.id = i
 		marker.text = ""+str(i)
 		marker.color.r = 0.0
 		marker.color.g = 0.0
@@ -69,15 +87,21 @@ def create_marker(i,types,use_text):
 		marker.scale.z = 0.3
 	else :
 		marker.id = i
-		marker.color.r = 1.0
-		marker.color.g = 0.0
-		marker.color.b = 0.0
-		marker.color.a = 0.5
+		if(obstacle):
+			marker.color.r = 1.0
+			marker.color.a = 0.5
+		else:
+			marker.color.g = 1.0
+			marker.color.a = 0.5
+		# marker.color.r = 1.0
+		# marker.color.g = 0.0
+		# marker.color.b = 0.0
+		# marker.color.a = 0.5
 		marker.scale.z = 0.05
 
 	marker.type = types
 	marker.action = Marker.ADD
-	cur_pos =  grid.state2vicon(sys_target_point[i])
+	cur_pos =  grid.state2vicon(value_target)
 	marker.pose.position.x = cur_pos.x
 	marker.pose.position.y = cur_pos.y
 	marker.pose.position.z = 0
@@ -110,11 +134,14 @@ def send_setpoint(init_point,end_point):
 
 def send_target_rviz() :
 	markers = MarkerArray()
-	for i in range(sys_target_number):
-		marker = create_marker(i,Marker.CUBE,False)
-		marker_text = create_marker(i,Marker.TEXT_VIEW_FACING,True)
+	# for i in range(sys_target_number):
+	# 	marker = create_marker(i,sys_target_point[i],Marker.CUBE,False)
+	# 	marker_text = create_marker(sys_target_number+i,sys_target_point[i],Marker.TEXT_VIEW_FACING,True)
+	# 	markers.markers.append(marker)
+	# 	#markers.markers.append(marker_text)
+	for i in range(len(env_target_point)):
+		marker = create_marker(2*sys_target_number + i,env_target_point[i],Marker.CUBE,False,True)
 		markers.markers.append(marker)
-		markers.markers.append(marker_text)
 	vis_pub.publish(markers)
 	print ("SENDING MARKERS FINISHED")
 
@@ -175,9 +202,10 @@ class Env_node :
 		cmd_srv(cmdAction)
 		quad_pos = self.quad.get_current_pos()
 		next_position =  self.grid.state2vicon(self.target_points[self.curr_ind])
+		next_position.z = self.quad.z
 		curr_color = [1.0,0,0]
 		send_setpoint(quad_pos,next_position)
-		move_quad(quad_pos,next_position,SEND_POS_FREQ,5,publisher)
+		move_quad(quad_pos,next_position,SEND_POS_FREQ,10,publisher)
 		while self.quad.grid_state(self.grid) != self.target_points[self.curr_ind]:
 			wait_rate.sleep()
 		self.curr_ind = (self.curr_ind +1)%len(self.target_points)
@@ -185,6 +213,7 @@ class Env_node :
 	def move(self,publisher):
 		quad_pos = self.quad.get_current_pos()
 		next_position = self.grid.state2vicon(self.target_points[self.curr_ind])
+		next_position.z = self.quad.z
 		curr_color = [1.0,0,0]
 		send_setpoint(quad_pos,next_position)
 		move_quad(quad_pos,next_position,SEND_POS_FREQ,ONE_MOVE_DURATION,publisher)
@@ -207,12 +236,14 @@ class Sys_node:
 		next_move = self.quad_env.grid.state2vicon(next_state)
 		curr_color = [1.0,1.0,1.0]
 		send_setpoint(self.quad_env.grid.get_position(),next_move)
-		move_quad(self.quad_env.grid.get_position(),next_move,SEND_POS_FREQ,5,publisher)
+		move_quad(self.quad_env.grid.get_position(),next_move,SEND_POS_FREQ,10,publisher)
 		while self.quad_env.grid.vicon2state(self.quad_env.grid.get_position()) != next_state:
 			wait_rate.sleep()
 
 	def move(self,publisher):
-		res = self.current_controller.move(self.quad_env.quad.grid_state(self.quad_env.grid))
+
+		#res = self.current_controller.move(self.quad_env.quad.grid_state(self.quad_env.grid))
+		res = self.current_controller.move(self.quad_env.target_points[self.quad_env.curr_ind-1])
 		next_state  = res['loc']
 		next_move = self.quad_env.grid.state2vicon(next_state)
 		curr_color = [1.0,1.0,1.0]
@@ -222,14 +253,15 @@ class Sys_node:
 
 class Quad:
 
-	def __init__(self,name):
+	def __init__(self,name,z):
 		self.name = name
 		self.current_pos = Point()
+		self.z = z
 
 	def handle_position(self,msg):
 		self.current_pos.x = msg.transform.translation.x
 		self.current_pos.y = msg.transform.translation.y
-		self.current_pos.z = Z_LEVEL
+		self.current_pos.z = self.z
 
 	def grid_state(self,curr_grid):
 		state = curr_grid.vicon2state(self.current_pos)
@@ -378,7 +410,7 @@ def move_quad(current_pos,next_pos,freq,duration,publisher):
 
 if __name__ == "__main__":
 
-	current_controller = FollowMeCtrl()
+	current_controller = FollowMeCtrl_50_obs()
 
 	#Grid definition
 	base = Point()
@@ -393,7 +425,7 @@ if __name__ == "__main__":
 	grid = Grid(X_NUMBER_TILE, Y_NUMBER_TILE,Z_LEVEL, base, maximum)
 	print(grid.blocklengthX)
 	print(grid.blocklengthY)
-	quad_env1 = Quad("env1")
+	quad_env1 = Quad("env1",Z_LEVEL)
 
 	#Gazebo test
 	#quad_env.current_pos = grid.state2vicon(24)
@@ -408,6 +440,48 @@ if __name__ == "__main__":
 	vis_pub = rospy.Publisher("visualization_marker_array",MarkerArray,queue_size=1)
 	set_point_pub = rospy.Publisher("visualization_marker",Marker,queue_size=1)
 
+	####################################################
+	# obstacle_list = [(2,-2),(0,1),(-0.5,-2.5),(2,0),(-3,2),(-1.5,-0.5),(3.5,3.5)]
+	# #obstacle_list = [(2,-2),(0,0),(-0.5,-2.5),(2,0),(-3,2),(-1.5,-0.5)]
+	# #obstacle_list = [(0,0),(-0.5,-2.5),(2,0),(-3,2),(-3,-0.5)]
+	# fixed_obstacle =[]
+	# for (x,y) in obstacle_list:
+	# 	p = Point()
+	# 	p.x = x
+	# 	p.y = y
+	# 	fixed_obstacle.append(grid.vicon2state(p))
+	#fixed_obstacle = [73, 56, 42, 75, 27, 34]
+	fixed_obstacle = [1132, 824, 730, 1140, 348, 578, 1394]
+	print fixed_obstacle
+	fixed_obstacle_state = []
+	for elem in fixed_obstacle:
+		fixed_obstacle_state.append(elem)
+		fixed_obstacle_state.extend(get_point_strict_dist(elem,0,strict_dist=False))
+
+	x = [-2.0 , -2.0 , 2.0 , 2.0,-1.3,0.2,1.34,0.5,-0.4,0.15,0.0]
+	y = [2.0 , -2.0, -2.0 , 2.0 ,1.3,-2.25,-1.0,1.5,0.32,-1.0,0.0]
+	t = [0.0 , 0.5 , 1.5 , 2 ,3 , 4 , 5 , 5.8 ,6.8 , 7.8 , 8.4]
+	rospy.wait_for_service('/min_snap_trajectory')
+	path_plan = PathPlanRequest()
+	x_axis = [ ConstraintAxis(m, list()) for m in x]
+	path_plan.waypoints.x = x_axis
+	path_plan.waypoints.y = [ConstraintAxis(m, list()) for m in y]
+	path_plan.waypoints.corridors =[0.0 , 0.0, 0.0 , 2,1.0 ,0.0,0.0,0.0,0,0]
+	path_plan.waypoints.t =t
+	path_plan.freq = 100
+	min_snap_traj= rospy.ServiceProxy('/min_snap_trajectory',PathPlan)
+	res = min_snap_traj(path_plan);
+	target_point_ = []
+	env_target_point = []
+	for elem in res.traj.pva:
+		elem.pos.z = Z_LEVEL
+		print elem.pos.x
+		target_point_.append(grid.vicon2state(elem.pos))
+	for i in target_point_:
+		if i not in env_target_point:
+			env_target_point.append(i)
+	#######################################################
+
 	env_thread = Env_node(ENV_NAME,quad_env1,grid,env_target_point)
 	sys_thread = Sys_node(SYS_NAME,env_thread,current_controller)
 
@@ -415,7 +489,7 @@ if __name__ == "__main__":
 	rospy.Subscriber("/joy",Joy,env_thread.handle_joy)
 
 	wait_rate = rospy.Rate(1)
-	
+
 	#Starting environment thread
 	#env_thread.start()
 	while not env_thread.is_posctl:
@@ -428,6 +502,8 @@ if __name__ == "__main__":
 	sys_thread.sys_quad_init(sys_traj_pub)
 	wait_rate.sleep()
 
+	raw_input("Start ... ")
+	wait_rate = rospy.Rate(SEND_POS_FREQ)
 	#Finally start the turned based routine
 	while not rospy.is_shutdown():
 		env_thread.move(env_traj_pub)
