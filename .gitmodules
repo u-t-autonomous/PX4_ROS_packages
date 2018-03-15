@@ -6,3 +6,7 @@
 	path = min_snap_ros/src/min_snap/external/eigen-git-mirror
 	url = https://github.com/eigenteam/eigen-git-mirror.git
 	branch = master
+[submodule "joystick_drivers"]
+	path = joystick_drivers
+	url = https://github.com/ros-drivers/joystick_drivers.git
+	branch = master

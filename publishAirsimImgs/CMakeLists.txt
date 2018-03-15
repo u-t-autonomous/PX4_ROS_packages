@@ -58,18 +58,18 @@ link_directories(
 ## Build ##
 ###########
 
-add_definitions(${PCL_DEFINITIONS})
+# add_definitions(${PCL_DEFINITIONS})
 
-add_executable(airsim_imgPublisher 
-               src/imgPublisher.cpp 
-               src/input_sampler.cpp
-               src/HelperFunctions/QuatRotEuler.cpp
-               src/Callbacks/callbacks.cpp
-)
+# add_executable(airsim_imgPublisher 
+#                src/imgPublisher.cpp 
+#                src/input_sampler.cpp
+#                src/HelperFunctions/QuatRotEuler.cpp
+#                src/Callbacks/callbacks.cpp
+# )
 
-add_dependencies(airsim_imgPublisher ${catkin_EXPORTED_TARGETS})
+# add_dependencies(airsim_imgPublisher ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(airsim_imgPublisher ${catkin_LIBRARIES} AirLib  MavLinkCom rpc pthread ${OpenCV_LIBS})
+# target_link_libraries(airsim_imgPublisher ${catkin_LIBRARIES} AirLib  MavLinkCom rpc pthread ${OpenCV_LIBS})
 
 ##add_dependencies(airsim_imgPublisher airsim_img_publisher_generate_messages_cpp)
 
