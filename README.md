@@ -56,15 +56,16 @@ export ROS_IP=192.168.1.XX
 where the first 'XX' is the master IP. The second is your own IP.
 
 ## Compilation of the ROS packages
-Clone the current repository not in the src file then build it.
+Clone the current repository in the src file then build it.
 ```sh
-cd ~/catkin_ws
+cd ~/catkin_ws/src
 git clone https://github.com/u-t-autonomous/PX4_ROS_packages.git
 cd PX4_ROS_packages
 git checkout v2.0_08_2017
 git submodule update --init --recursive
-cd ..
-cp -r PX4_ROS_packages/* src/
+cd joystick_drivers/
+git checkout indigo-devel
+cd ~/catkin_ws
 
 catkin_make
 # If an error like this : jobserver unavailable: using -j1.  Add '+' to parent make rule
@@ -72,9 +73,6 @@ catkin_make
 catkin_make
 
 source devel/setup.sh
-
-# You may want to delete or not this file
-rm -rf PX4_ROS_packages
 ```
 
 
