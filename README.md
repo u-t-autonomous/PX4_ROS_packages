@@ -1,17 +1,44 @@
 # PX4_ROS_packages
-This package provides tools to work with PX4 and Snapdragon over ROS.
-Before being able to use all these ROS nodes, these dependencies have to be installed.
+This package provides ROS tools to work with PX4 Simulation on Gazebo and AirSIM, PX4 autopilot integrated with Snapdragon or another board.
 
-# Package installation
+# Package installation and dependencies
 
-Install the dependencies
+This manual have been tested on a clean Ubuntu 16.04 LTS installation.
+
+## Common dependencies
 ```sh
-sudo apt-get install libspnav-dev libbluetooth-dev libcwiid-dev libusb-dev libeigen3-dev
+sudo apt-get update -y
+sudo apt-get install git zip qtcreator cmake build-essential gfortran libeigen3-dev genromfs ninja-build -y
+
+# Required python packages for PX4
+sudo apt-get install python-argparse python-empy python-toml python-numpy python-dev python-pip -y
+sudo -H pip install --upgrade pip
+sudo -H pip install pandas jinja2 pyserial
 ```
 
-Install ROS using [this](http://wiki.ros.org/indigo/Installation/Ubuntu). This is the indigo version. Feel freee to install the version of your choice.
+## Minimum snap dependencies
+SuiteSparse, cholmod are needed in order to accelerate matrix operations and applying parrallelism.
+GSL is also need.
+```sh
+#
+sudo apt-get install libgsl-dev libsuitesparse-dev
+```
 
-Create ROS workspace if needed
+## Joystick dependencies
+```sh
+sudo apt-get install libspnav-dev libbluetooth-dev libcwiid-dev libusb-dev
+```
+
+## ROS dependencies
+Install ROS for [Ubuntu 16.04](http://wiki.ros.org/kinetic/Installation/Ubuntu).
+
+You will also need MAVROS installed on your computer. if not, follow this :
+```sh
+# For Ros Kinteic (Ubuntu 16.04)
+sudo apt-get install ros-kinetic-mavros ros-kinetic-mavros-extras
+```
+
+Create and initialize ROS workspace if needed
 ```sh
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws/src
@@ -19,39 +46,33 @@ catkin_init_workspace
 cd ..
 catkin_make
 ```
-You alse need to have mavros installed on your computer. if not, follow this :
-```sh
-# For Ros Indigo
-sudo apt-get install ros-indigo-mavros ros-indigo-mavros-extras
-# For Ros Kinteic
-sudo apt-get install ros-kinetic-mavros ros-kinetic-mavros-extras
-```
-Depending on if Eigen3 has his .cmake file in your current version of cmake, you may need to execute this:
-```sh
-sudo cp /usr/share/cmake-2.8/Modules/FindEigen3.cmake /usr/share/cmake-3.X/Modules/
-```
-Where X is your using version of cmake.
 
-If already not done, add the following lines to the end of the .bashrc file:
+If already not done, add the following lines at the end of your .bashrc file:
 ```sh
 export ROS_MASTER_URI=http://192.168.1.XX:11311
 export ROS_IP=192.168.1.XX
 ```
-where 'XX' is your own IP.
+where the first 'XX' is the master IP. The second is your own IP.
 
-Clone the current repository not in the src file. The qcontrol_defs package have to be build before the other ROS package
+## Compilation of the ROS packages
+Clone and build the following two catkin_packages
+```sh
+cd ~/catkin_ws/src
+# Mandatory to compile snap_joy node
+git clone https://github.com/ros-drivers/joystick_drivers.git
+# Not mandatory
+git clone https://github.com/ethz-asl/vicon_bridge
+cd ..
+catkin_make
+source devel/setup.sh
+```
+
+Clone the current repository not in the src file. The qcontrol_defs package have to be build before the other packages
 ```sh
 cd ~/catkin_ws
 git clone https://github.com/u-t-autonomous/PX4_ROS_packages.git
-mv PX4_ROS_packages/qcontrol_defs src/
-```
-
-Then clone the following two catkin_packages and build
-```sh
-cd ~/catkin_ws/src
-git clone https://github.com/ros-drivers/joystick_drivers.git
-git clone https://github.com/ethz-asl/vicon_bridge
-cd ..
+git submodule update --init --recursive
+cp -r PX4_ROS_packages/qcontrol_defs src/
 catkin_make
 source devel/setup.sh
 ```
@@ -59,38 +80,14 @@ source devel/setup.sh
 Finally build the rest of the PX4_ROS_packages nodes
 ```sh
 cd ~/catkin_ws/
-mv PX4_ROS_packages/* src/
+cp -r PX4_ROS_packages/* src/
 catkin_make
 source devel/setup.sh
+# You may want to delete or not the cloned code
+rm -rf PX4_ROS_packages
 ```
 # offboard_control package
 This sub package handles the low level interaction between the offboard computer and PX4 on the quad. Basically you can send using this package velocity, position , attitude setpoint to the quad. You can also request takeoff, land , switching between mode request etc...
 
-Before launching this node, be sure the PX4 is launch on quad side and that vicon is already tracking the quad.
-```sh
-ssh linaro@192.168.1.XX
-sudo ./px4 mainapp.config
-```
-where 'XX' is the IP of your snapdragon and the password for connection is `linaro`.
-
-Now launch the node that interacts with the quad
-```sh
-roslaunch offboard_control quadX_offboard.launch
-```
-where X is the vicon number you assigned to the quad. (More mprovement have to be taken her !!! Documentation will change)
-
-When offboard_node is launched, the quad can be used via any other ros node. 
-
-###	A C++ example can be find [HERE(joy control of the quad)](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/master/offboard_control/src/snap_joy.cpp)
-
-### A Python example can be find here [HERE(global methods for taking off,landing, switch to poctl, speedctl ...)](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/master/reactive_test/src/system_node.py)
-
-An example can be controlling the quad using a joy. Just launch the predefined launch file
-```sh
-roslaunch offboard_control quadX_joy.launch
-```
-where X is the name of the quad in vicon 
-
-example of launch file can be modified for a specific quad name or quad IP or udp mavros port. Just look at the ones in this repository if looking for example. Parameter are pretty self explanatory.
 
 # Reactive controller test
