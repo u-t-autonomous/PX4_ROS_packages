@@ -13,6 +13,17 @@
 
 	<!-- <node ns="mavros" pkg="offboard_control" name="Quad9_visu" type="copter_visualization_node" output="screen" /> -->
 
+	<include file="$(find mavros)/launch/node.launch">
+		<arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+		<arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+
+		<arg name="fcu_url" value="$(arg fcu_url)" />
+		<arg name="gcs_url" value="$(arg gcs_url)" />
+		<arg name="tgt_system" value="$(arg tgt_system)" />
+		<arg name="tgt_component" value="$(arg tgt_component)" />
+		<arg name="log_output" value="$(arg log_output)" />
+	</include>
+
 	<node pkg="offboard_control" name="Quad9_offboard" type="offboard_control_node" output="screen">
 		<param name ="is_multicopter" value= "$(arg is_multicopter)" />
 		<param name="att_mode_rate" value="40"/>
@@ -44,7 +55,10 @@
 		<!-- <param name="autorepeat_rate" value="40"/> -->
 	</node>
 
-	<node pkg="offboard_control" name="Quad9_joy" type="snap_joy_node" output="screen">
+	<node pkg="min_snap_ros" name="min_snap" type="min_snap_ros_node" output="screen" >
+	</node>
+
+	<node pkg="offboard_control" name="Quad_joy" type="snap_joy_node" output="screen">
 		<param name="only_command" value = "$(arg only_command)" />
 		<param name="is_multicopter" value = "$(arg is_multicopter)" />
 		<param name="time_constant" value="0.2" />
