@@ -16,6 +16,7 @@
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/ExtendedState.h>
 #include <mavros_msgs/ActuatorControl.h>
+#include <mavros_msgs/AttitudeTarget.h>
 
 #include <qcontrol_defs/PosControl.h>
 #include <qcontrol_defs/VelControl.h>
@@ -239,9 +240,9 @@ void send_attitude_data(){
 
 	ros::Rate att_rate(att_mode_rate);
 
-	geometry_msgs::PoseStamped att_msg;
+	mavros_msgs::AttitudeTarget att_msg;
 	// std_msgs::Float64  thrust_msg;
-	mavros_msgs::Thrust thrust_msg;
+	// mavros_msgs::Thrust thrust_msg;
 
 	while(ros::ok() && is_offboard && is_att_control){
 
@@ -257,26 +258,22 @@ void send_attitude_data(){
 
 		mutex_att_pva_control.unlock();
 
-		mutex_odom_local.lock();
-		att_msg.pose.position = current_odom.pose.pose.position;
-		mutex_odom_local.unlock();
+		att_msg.type_mask = mavros_msgs::AttitudeTarget::IGNORE_ROLL_RATE |
+							mavros_msgs::AttitudeTarget::IGNORE_PITCH_RATE |
+							mavros_msgs::AttitudeTarget::IGNORE_YAW_RATE;
 
 		att_msg.header.seq = att_seq;
 		att_msg.header.frame_id="fcu";
-		att_msg.pose.orientation = rpy2quat(rpy);
 
-		thrust_msg. header.seq = att_seq;
-		thrust_msg.header.frame_id = "fcu";
-		// thrust_msg.data = throttle; 
-		thrust_msg.thrust = is_mc ? (throttle>= 0 ? throttle : 0) : throttle;
+		att_msg.orientation = rpy2quat(rpy);
+
+		att_msg.thrust = is_mc ? (throttle>= 0 ? throttle : 0) : throttle;
 
 		att_msg.header.stamp = ros::Time::now();
-		thrust_msg.header.stamp = ros::Time::now();
-
 
 		//Publish the message then sleep
 		target_att_pub.publish(att_msg);
-		target_thrust_pub.publish(thrust_msg);
+		// target_thrust_pub.publish(thrust_msg);
 
 		att_seq++;
 		att_rate.sleep();
@@ -1101,8 +1098,8 @@ int main(int argc, char **argv){
 	target_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local" ,10);
 	// target_att_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_attitude/attitude" , 10);
 	// target_thrust_pub = nh.advertise<std_msgs::Float64>("mavros/setpoint_attitude/att_throttle" , 10);
-	target_att_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_attitude/target_attitude" , 10);
-	target_thrust_pub = nh.advertise<mavros_msgs::Thrust>("mavros/setpoint_attitude/thrust" , 10);
+	target_att_pub = nh.advertise<mavros_msgs::AttitudeTarget>("mavros/setpoint_raw/attitude" , 10);
+	// target_thrust_pub = nh.advertise<mavros_msgs::Thrust>("mavros/setpoint_attitude/thrust" , 10);
 	offboard_info = nh.advertise<qcontrol_defs::QuadState>(OFFBOARD_INFO,10);
 	if (is_mc)		
 		target_acc_pub = nh.advertise<geometry_msgs::Vector3Stamped>("mavros/setpoint_accel/accel" , 10);
