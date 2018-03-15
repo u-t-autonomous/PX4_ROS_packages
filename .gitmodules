@@ -1,0 +1,8 @@
+[submodule "min_snap_ros/src/min_snap/external/OpenBLAS"]
+	path = min_snap_ros/src/min_snap/external/OpenBLAS
+	url = https://github.com/xianyi/OpenBLAS.git
+	branch = master
+[submodule "min_snap_ros/src/min_snap/external/eigen-git-mirror"]
+	path = min_snap_ros/src/min_snap/external/eigen-git-mirror
+	url = https://github.com/eigenteam/eigen-git-mirror.git
+	branch = master

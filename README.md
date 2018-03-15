@@ -86,11 +86,11 @@ cd ~/catkin_ws/
 cp -r PX4_ROS_packages/* src/
 catkin_make
 source devel/setup.sh
-# You may want to delete or not the cloned code
+# You may want to delete or not this file
 rm -rf PX4_ROS_packages
 ```
 # offboard_control package
-This sub package handles the low level interaction between the offboard computer and PX4 on the quad. Basically you can send using this package velocity, position , attitude setpoint to the quad. You can also request takeoff, land , switching between mode request etc...
+This sub package handles the low level interaction between the offboard computer and PX4 on the quad. Basically you can send using this package velocity, position , attitude setpoint to the quad. You can also request do, land , switching between mode request etc...
 
 
 # Reactive controller test
