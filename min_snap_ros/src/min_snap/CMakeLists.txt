@@ -19,19 +19,41 @@ set(${PROJECT_NAME}_INCLUDE_DIRS
   CACHE INTERNAL "${PROJECT_NAME}: Include Directories" FORCE
 )
 
-set(BLAS_DIR /usr/local)
-set(BLAS_INCDIR /usr/local/include)
-set(BLAS_LIBDIR /usr/local/lib)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/openblas)
 
+set(OpenBLAS_DIR
+  "${CMAKE_CURRENT_BINARY_DIR}/openblas/lib/cmake/openblas"
+)
+
+SET(OpenBLAS_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/openblas/include)
+SET(OpenBLAS_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/openblas/lib/libopenblas.so)
+
+if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/openblas/lib/libopenblas.so")
+  add_custom_command(
+    OUTPUT ${OpenBLAS_DIR}
+    COMMAND make FC=gfortran -C ${CMAKE_CURRENT_SOURCE_DIR}/external/OpenBLAS
+    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/external/OpenBLAS PREFIX=${CMAKE_CURRENT_BINARY_DIR}/openblas install
+    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/external/OpenBLAS clean
+    COMMAND ${CMAKE_COMMAND} -E touch ${OpenBLAS_DIR}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/openblas"
+    COMMENT "Building OPENBLAS"
+    VERBATIM
+  )
+
+  add_custom_target(
+    OpenBLAS_INSTALL ALL
+    DEPENDS  ${OpenBLAS_DIR}
+  )
+endif()
+
+
+set(ENV{EIGEN3_ROOT_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/external/eigen-git-mirror)
 find_package(Eigen3 3.3 REQUIRED)
+
 find_package(Cholmod REQUIRED)
 find_package(SPQR REQUIRED)
-
-find_package(BLAS REQUIRED)					#Can be changed to your favorite  BLAS package
-find_package(LAPACK REQUIRED)				#Can be changed to your favorite  LAPACK package
-find_package(CBLAS)							    #Can be changed to your favorite  CBLAS package
-find_package(LAPACKE REQUIRED) 
 find_package(GSL REQUIRED)
+
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -msse3 -fopenmp -DNDEBUG -fpic ${BLAS_LINKER_FLAGS}  ${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
@@ -39,10 +61,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 include_directories(
   ${PROJECT_NAME}_INCLUDE_DIRS
+  ${OpenBLAS_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
-  ${BLAS_INCDIR}
-  ${LAPACKE_INCLUDE_DIRS}
-  ${CBLAS_INCLUDES}
   ${GSL_INCLUDE_DIRS}
   ${CHOLMOD_INCLUDES}
   ${SPQR_INCLUDES}
@@ -54,14 +74,11 @@ add_library( ${PROJECT_NAME} SHARED
   min_snap.cpp
 )
 
-target_link_libraries( ${PROJECT_NAME} 
+target_link_libraries( ${PROJECT_NAME}
   ${CHOLMOD_LIBRARIES}
   ${SPQR_LIBRARIES}
   ${GSL_LIBRARY}
-  ${CBLAS_LIBRARIES}
-  ${BLAS_LIBRARIES}
-  ${LAPACK_LIBRARIES}
-  ${LAPACKE_LIBRARIES}
+  ${OpenBLAS_LIBRARIES}
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
