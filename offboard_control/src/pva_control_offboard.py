@@ -41,7 +41,7 @@ if __name__ == "__main__":
     y_traj = [current_pos.y , target1.y , target2.y]
     z_traj = [current_pos.z , target1.z , target2.z]
 
-    pva_list = generate_traj_3d(x=x_traj , y=y_traj , z=z_traj , traj_time=time_full_traj , corr=None , freq = freq)
+    pva_list = generate_traj_3d(x=x_traj , y=y_traj , z=z_traj , traj_time=[0,time_full_traj] , corr=None , freq = freq)
     
     # Send the generate traj to the vehicle
     for elem in pva_list.pva :

@@ -78,7 +78,7 @@ rm -rf PX4_ROS_packages
 ```
 
 
-NOTE :  Only For simulation with Airsim, the package publishAirsimImgs has to be allow to build executable. This is done by setting the [Airlib_addr](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/59d080540ac639b3fed2c3b1a9f78d96425d906c/publishAirsimImgs/CMakeLists.txt#L6) with the appropriate path to Airlib source file. Finally uncomment [these lines](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/59d080540ac639b3fed2c3b1a9f78d96425d906c/publishAirsimImgs/CMakeLists.txt#L61-L72) and catkin_make again your catkin workspace.
+NOTE :  Only For simulation with Airsim, the package publishAirsimImgs has to be allow to build executable. This is done by setting the [Airlib_addr](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/41124332bb76a0ffeebaaef0c52d1800b0c9eaf2/publishAirsimImgs/CMakeLists.txt#L6) with the appropriate path to Airlib source file. Finally uncomment [these lines](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/41124332bb76a0ffeebaaef0c52d1800b0c9eaf2/publishAirsimImgs/CMakeLists.txt#L61-L74) and catkin_make again your catkin workspace.
 
 Clone and build the following package if you want to be able to communicate with VICON
 ```sh
