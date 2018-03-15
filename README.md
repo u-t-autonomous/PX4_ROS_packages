@@ -7,6 +7,7 @@ This manual have been tested on a clean Ubuntu 16.04 LTS installation.
 
 ## Common dependencies
 ```sh
+# Basics dependencies
 sudo apt-get update -y
 sudo apt-get install git zip qtcreator cmake build-essential gfortran libeigen3-dev genromfs ninja-build -y
 
@@ -20,7 +21,6 @@ sudo -H pip install pandas jinja2 pyserial
 SuiteSparse, cholmod are needed in order to accelerate matrix operations and applying parrallelism.
 GSL is also need.
 ```sh
-#
 sudo apt-get install libgsl-dev libsuitesparse-dev
 ```
 
@@ -71,7 +71,10 @@ Clone the current repository not in the src file. The qcontrol_defs package have
 ```sh
 cd ~/catkin_ws
 git clone https://github.com/u-t-autonomous/PX4_ROS_packages.git
+cd PX4_ROS_packages
+git checkout v2.0_08_2017
 git submodule update --init --recursive
+cd ..
 cp -r PX4_ROS_packages/qcontrol_defs src/
 catkin_make
 source devel/setup.sh
