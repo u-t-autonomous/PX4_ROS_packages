@@ -14,13 +14,6 @@ endif()
 
 set(CMAKE_MODULE_PATH "/${PROJECT_SOURCE_DIR}/cmake/modules;${CMAKE_MODULE_PATH}")
 
-set(${PROJECT_NAME}_INCLUDE_DIRS
-  ${PROJECT_SOURCE_DIR}/include
-  CACHE INTERNAL "${PROJECT_NAME}: Include Directories" FORCE
-)
-
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/openblas)
-
 set(OpenBLAS_DIR
   "${CMAKE_CURRENT_BINARY_DIR}/openblas/lib/cmake/openblas"
 )
@@ -28,23 +21,23 @@ set(OpenBLAS_DIR
 SET(OpenBLAS_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/openblas/include)
 SET(OpenBLAS_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/openblas/lib/libopenblas.so)
 
-if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/openblas/lib/libopenblas.so")
-  add_custom_command(
-    OUTPUT ${OpenBLAS_DIR}
-    COMMAND make FC=gfortran -C ${CMAKE_CURRENT_SOURCE_DIR}/external/OpenBLAS
-    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/external/OpenBLAS PREFIX=${CMAKE_CURRENT_BINARY_DIR}/openblas install
-    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/external/OpenBLAS clean
-    COMMAND ${CMAKE_COMMAND} -E touch ${OpenBLAS_DIR}
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/openblas"
-    COMMENT "Building OPENBLAS"
-    VERBATIM
-  )
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/openblas/include)
 
-  add_custom_target(
-    OpenBLAS_INSTALL ALL
-    DEPENDS  ${OpenBLAS_DIR}
-  )
-endif()
+add_custom_command(
+  OUTPUT ${OpenBLAS_DIR}
+  COMMAND make FC=gfortran -C ${CMAKE_CURRENT_SOURCE_DIR}/external/OpenBLAS
+  COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/external/OpenBLAS PREFIX=${CMAKE_CURRENT_BINARY_DIR}/openblas install
+  COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/external/OpenBLAS clean
+  COMMAND ${CMAKE_COMMAND} -E touch ${OpenBLAS_DIR}
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/openblas"
+  COMMENT "Building OPENBLAS"
+  VERBATIM
+)
+
+add_custom_target(
+  OpenBLAS_INSTALL ALL
+  DEPENDS  ${OpenBLAS_DIR}
+)
 
 
 set(ENV{EIGEN3_ROOT_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/external/eigen-git-mirror)
@@ -59,13 +52,18 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -msse3 -fopenmp -DNDEBUG -fpic ${BLAS_LINKER_FLA
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-include_directories(
-  ${PROJECT_NAME}_INCLUDE_DIRS
+set(${PROJECT_NAME}_INCLUDE_DIRS
+  ${PROJECT_SOURCE_DIR}/include
   ${OpenBLAS_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
   ${GSL_INCLUDE_DIRS}
   ${CHOLMOD_INCLUDES}
   ${SPQR_INCLUDES}
+  CACHE INTERNAL "${PROJECT_NAME}: Include Directories" FORCE
+)
+
+include_directories(
+  ${${PROJECT_NAME}_INCLUDE_DIRS}
 )
 
 add_definitions( -DEIGEN_USE_BLAS -DEIGEN_USE_LAPACKE)
@@ -81,7 +79,7 @@ target_link_libraries( ${PROJECT_NAME}
   ${OpenBLAS_LIBRARIES}
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC include)
+target_include_directories(${PROJECT_NAME} PUBLIC ${${PROJECT_NAME}_INCLUDE_DIRS})
 
 # INSTALL STEPS
 INSTALL(
@@ -98,7 +96,7 @@ INSTALL(
   DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 
-add_executable(test_solver test_solver.cpp ${EIGEN3_INCLUDE_DIR} ${min_snap_INCLUDE_DIRS})
+add_executable(test_solver test_solver.cpp ${EIGEN3_INCLUDE_DIR} ${${PROJECT_NAME}_INCLUDE_DIRS})
 target_link_libraries(test_solver ${PROJECT_NAME})
 
 #add_definitions(${BLAS_DEFINITIONS} ${LAPACK_DEFINITIONS})

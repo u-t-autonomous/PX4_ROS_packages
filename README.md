@@ -45,6 +45,7 @@ cd ~/catkin_ws/src
 catkin_init_workspace
 cd ..
 catkin_make
+echo 'source ~/catkin_ws/devel/setup.sh' >> ~/.bashrc
 ```
 
 If already not done, add the following lines at the end of your .bashrc file:
@@ -55,19 +56,7 @@ export ROS_IP=192.168.1.XX
 where the first 'XX' is the master IP. The second is your own IP.
 
 ## Compilation of the ROS packages
-Clone and build the following two catkin_packages
-```sh
-cd ~/catkin_ws/src
-# Mandatory to compile snap_joy node
-git clone https://github.com/ros-drivers/joystick_drivers.git
-# Not mandatory
-git clone https://github.com/ethz-asl/vicon_bridge
-cd ..
-catkin_make
-source devel/setup.sh
-```
-
-Clone the current repository not in the src file. The qcontrol_defs package have to be build before the other packages
+Clone the current repository not in the src file then build it.
 ```sh
 cd ~/catkin_ws
 git clone https://github.com/u-t-autonomous/PX4_ROS_packages.git
@@ -75,22 +64,33 @@ cd PX4_ROS_packages
 git checkout v2.0_08_2017
 git submodule update --init --recursive
 cd ..
-cp -r PX4_ROS_packages/qcontrol_defs src/
+cp -r PX4_ROS_packages/* src/
+
+catkin_make
+# If an error like this : jobserver unavailable: using -j1.  Add '+' to parent make rule
+# Then catkin_make again it should work the second time.
+catkin_make
+
+source devel/setup.sh
+
+# You may want to delete or not this file
+rm -rf PX4_ROS_packages
+```
+
+
+NOTE :  Only For simulation with Airsim, the package publishAirsimImgs has to be allow to build executable. This is done by setting the [Airlib_addr](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/59d080540ac639b3fed2c3b1a9f78d96425d906c/publishAirsimImgs/CMakeLists.txt#L6) with the appropriate path to Airlib source file. Finally uncomment [these lines](https://github.com/u-t-autonomous/PX4_ROS_packages/blob/59d080540ac639b3fed2c3b1a9f78d96425d906c/publishAirsimImgs/CMakeLists.txt#L61-L72) and catkin_make again your catkin workspace.
+
+Clone and build the following package if you want to be able to communicate with VICON
+```sh
+cd ~/catkin_ws/src
+git clone https://github.com/ethz-asl/vicon_bridge
+cd ..
 catkin_make
 source devel/setup.sh
 ```
 
-Finally build the rest of the PX4_ROS_packages nodes
-```sh
-cd ~/catkin_ws/
-cp -r PX4_ROS_packages/* src/
-catkin_make
-source devel/setup.sh
-# You may want to delete or not this file
-rm -rf PX4_ROS_packages
-```
 # offboard_control package
-This sub package handles the low level interaction between the offboard computer and PX4 on the quad. Basically you can send using this package velocity, position , attitude setpoint to the quad. You can also request do, land , switching between mode request etc...
+This sub package handles the low level interaction between the offboard computer and PX4 on the quad. Basically you can send using this package velocity, position , attitude setpoint to the quad. You can also do take off, land , switching between mode request etc...
 
 
 # Reactive controller test
